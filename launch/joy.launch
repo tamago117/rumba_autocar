@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find create_bringup)/launch/create_2.launch"/>
+
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
+</launch>
