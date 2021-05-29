@@ -205,3 +205,9 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(joystickPS4_rumba   src/joystickPS4_rumba.cpp)
+target_link_libraries(joystickPS4_rumba
+  ${catkin_LIBRARIES}
+)
+
