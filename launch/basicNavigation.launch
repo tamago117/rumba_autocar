@@ -1,0 +1,10 @@
+<launch>
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/rumba_autocar.rviz" />
+
+    <include file="$(find create_bringup)/launch/create_2.launch"/>
+
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+</launch>
