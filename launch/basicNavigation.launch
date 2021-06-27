@@ -1,10 +1,38 @@
 <launch>
+    <!--rviz-->
     <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/rumba_autocar.rviz" />
-
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    <!--rumba-->
     <include file="$(find create_bringup)/launch/create_2.launch"/>
-
+    <!--joystick-->
     <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
     <node name="joy_node" pkg="joy" type="joy_node"/>
+    <!--real sense for imu-->
+    <arg name="offline"          default="false"/>
+    <include unless="$(arg offline)"
+        file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="enable_gyro" value="true"/>
+        <arg name="enable_accel" value="true"/>
+        <arg name="align_depth" value="true"/>
+        <arg name="linear_accel_cov" value="1.0"/>
+        <arg name="gyro_fps" value="30"/>
+        <arg name="accel_fps" value="30"/>
+        <arg name="unite_imu_method" value="linear_interpolation"/>
+    </include>
+    <node pkg="imu_filter_madgwick" type="imu_filter_node" name="ImuFilter">
+        <param name="use_mag" type="bool" value="false" />
+        <param name="_publish_tf" type="bool" value="false" />
+        <param name="_world_frame" type="string" value="enu" />
+        <remap from="/imu/data_raw" to="/camera/imu"/>
+    </node>
+    <!--odometry-->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
+        <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/mode1.yaml" />
+        <param name="tf_prefix" value="CREATE_2"/>
+        <remap from="/odometry/filtered" to="fusion/odom" />
+        <remap from="odom0" to="odom" />
+        <remap from="imu0"  to="imu/data" />
+    </node>
 
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    
 </launch>
