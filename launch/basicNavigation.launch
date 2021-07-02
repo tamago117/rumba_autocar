@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
     <arg name="nav_mode" default="slam"/>
     <arg name="move_base" default="true"/>
@@ -11,7 +12,15 @@
     <!--joystick-->
     <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
     <node name="joy_node" pkg="joy" type="joy_node"/>
+    <!--lidar-->
+    <node pkg="tf" type="static_transform_publisher" name="base_transform" args="0 0 0.07 0 0 0 base_link camera_link 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="lidar_tf" args="0.1 0 0.06 0 0 0 camera_link lidar_link 100"/>
+    <node name="urg_node" pkg="urg_node" type="urg_node">
+        <param name="ip_address" value="192.168.6.119"/>
+        <param name="frame_id" value="lidar_link"/>
+    </node>
     <!--real sense for imu-->
+    <!--
     <arg name="offline"          default="false"/>
     <include unless="$(arg offline)"
         file="$(find realsense2_camera)/launch/rs_camera.launch">
@@ -29,28 +38,30 @@
         <param name="_world_frame" type="string" value="enu" />
         <remap from="/imu/data_raw" to="/camera/imu"/>
     </node>
+    -->
     <!--odometry-->
+    <!--
     <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
         <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
-        <param name="tf_prefix" value="CREATE_2"/>
         <remap from="/odometry/filtered" to="fusion/odom" />
         <remap from="odom0" to="odom" />
         <remap from="imu0"  to="imu/data" />
     </node>
+    -->
 
     <group if="$(eval nav_mode == 'mapping')">
         <!--mapping-->
         <!--gmapping-->
         <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" clear_params="true">
-        <rosparam command="load" file="$(find rumba_autocar)/config/gmapping.yaml" />
-        <param name="base_frame" value="base_link" />
-        <param name="odom_frame" value="odom" />
-        <param name="map_frame"  value="map" />
+            <rosparam command="load" file="$(find rumba_autocar)/config/gmapping.yaml" />
+            <param name="base_frame" value="base_link" />
+            <param name="odom_frame" value="odom" />
+            <param name="map_frame"  value="map" />
         </node>
 
         <group if="$(arg move_base)">
             <!-- move_base -->
-            <!--<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+            <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
                 <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
@@ -62,11 +73,11 @@
                 <param name="local_costmap/global_frame" value="odom" />
                 <param name="local_costmap/robot_base_frame" value="base_link" />
             </node>
-        </group>-->
+        </group>
 
     </group>
 
-    <group unless="$(eval nav_mode == 'slam')">
+    <group if="$(eval nav_mode == 'slam')">
         <!-- amcl -->
         <node pkg="map_server" type="map_server" name="map_server" args="$(arg mapFile)">
             <param name="frame_id" value="map"/>
