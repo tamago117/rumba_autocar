@@ -2,6 +2,7 @@
 <launch>
     <arg name="nav_mode" default="slam"/>
     <arg name="move_base" default="true"/>
+    <arg name="use_imu" default="true"/>
     <arg name="mapFile" default = "$(find rumba_autocar)/resources/myRoom/map.yaml"/>
 
     <!--rviz-->
@@ -19,35 +20,38 @@
         <param name="ip_address" value="192.168.6.119"/>
         <param name="frame_id" value="lidar_link"/>
     </node>
-    <!--real sense for imu-->
-    <!--
-    <arg name="offline"          default="false"/>
-    <include unless="$(arg offline)"
-        file="$(find realsense2_camera)/launch/rs_camera.launch">
-        <arg name="enable_gyro" value="true"/>
-        <arg name="enable_accel" value="true"/>
-        <arg name="align_depth" value="true"/>
-        <arg name="linear_accel_cov" value="1.0"/>
-        <arg name="gyro_fps" value="30"/>
-        <arg name="accel_fps" value="30"/>
-        <arg name="unite_imu_method" value="linear_interpolation"/>
-    </include>
-    <node pkg="imu_filter_madgwick" type="imu_filter_node" name="ImuFilter">
-        <param name="use_mag" type="bool" value="false" />
-        <param name="_publish_tf" type="bool" value="false" />
-        <param name="_world_frame" type="string" value="enu" />
-        <remap from="/imu/data_raw" to="/camera/imu"/>
-    </node>
-    -->
-    <!--odometry-->
-    <!--
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
-        <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
-        <remap from="/odometry/filtered" to="fusion/odom" />
-        <remap from="odom0" to="odom" />
-        <remap from="imu0"  to="imu/data" />
-    </node>
-    -->
+
+    <group if="$(arg use_imu)">
+        <!--real sense for imu-->
+        <arg name="offline"          default="false"/>
+        <include unless="$(arg offline)"
+            file="$(find realsense2_camera)/launch/rs_camera.launch">
+            <arg name="enable_gyro" value="true"/>
+            <arg name="enable_accel" value="true"/>
+            <arg name="enable_depth" value="false"/>
+            <arg name="enable_color" value="false"/>
+            <arg name="align_depth" value="true"/>
+            <arg name="linear_accel_cov" value="1.0"/>
+            <arg name="unite_imu_method" value="linear_interpolation"/>
+        </include>
+        <node pkg="imu_filter_madgwick" type="imu_filter_node" name="ImuFilter">
+            <param name="use_mag" type="bool" value="false" />
+            <param name="_publish_tf" type="bool" value="false" />
+            <param name="_world_frame" type="string" value="enu" />
+            <remap from="/imu/data_raw" to="/camera/imu"/>
+        </node>
+
+        <node name="imu_to_pose" pkg="rumba_autocar" type="imu_to_pose">
+            <remap from="imu"  to="/camera/imu"/>
+        </node>
+        <!--odometry-->
+        <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
+            <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
+            <remap from="/odometry/filtered" to="fusion/odom" />
+            <remap from="odom0" to="odom" />
+            <remap from="imu0"  to="/camera/imu" />
+        </node>
+    </group>
 
     <group if="$(eval nav_mode == 'mapping')">
         <!--mapping-->
@@ -58,9 +62,8 @@
             <param name="odom_frame" value="odom" />
             <param name="map_frame"  value="map" />
         </node>
-
+        <!-- move_base -->
         <group if="$(arg move_base)">
-            <!-- move_base -->
             <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
                 <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
@@ -68,7 +71,7 @@
 
                 <param name="global_costmap/global_frame" value="map" />
                 <param name="global_costmap/robot_base_frame" value="base_link" />
-                <param name="local_costmap/laser_scan_sensor/sensor_frame" value="dtw_robot1/front_laser_link" />
+                <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
                 <param name="local_costmap/laser_scan_sensor/topic" value="scan" />
                 <param name="local_costmap/global_frame" value="odom" />
                 <param name="local_costmap/robot_base_frame" value="base_link" />
@@ -88,6 +91,21 @@
             <param name="odom_frame_id" value="odom" />
             <param name="global_frame_id" value="map" />
         </node>
+        <!-- move_base -->
+        <group if="$(arg move_base)">
+            <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+                <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
+                <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
+                <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
+
+                <param name="global_costmap/global_frame" value="map" />
+                <param name="global_costmap/robot_base_frame" value="base_link" />
+                <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
+                <param name="local_costmap/laser_scan_sensor/topic" value="scan" />
+                <param name="local_costmap/global_frame" value="odom" />
+                <param name="local_costmap/robot_base_frame" value="base_link" />
+            </node>
+        </group>
     </group>
 
 

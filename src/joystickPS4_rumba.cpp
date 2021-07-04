@@ -5,8 +5,8 @@
 geometry_msgs::Twist cmd_vel;
 void joy_callback(const sensor_msgs::Joy& joy_msg)
 {
-  cmd_vel.linear.x = joy_msg.axes[4];
-  cmd_vel.angular.z = joy_msg.axes[0];
+  cmd_vel.linear.x = 0.5 * joy_msg.axes[4];
+  cmd_vel.angular.z = 0.5 * joy_msg.axes[0];
 }
 
 int main(int argc, char** argv)

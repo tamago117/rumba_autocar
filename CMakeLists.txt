@@ -211,3 +211,8 @@ target_link_libraries(joystickPS4_rumba
   ${catkin_LIBRARIES}
 )
 
+add_executable(imu_to_pose   src/imu_to_pose.cpp)
+target_link_libraries(imu_to_pose
+  ${catkin_LIBRARIES}
+)
+
