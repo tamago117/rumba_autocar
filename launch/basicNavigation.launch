@@ -1,31 +1,52 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="config" default="$(find create_bringup)/config/default.yaml" />
     <arg name="nav_mode" default="slam"/>
     <arg name="move_base" default="true"/>
     <arg name="use_imu" default="true"/>
+    <arg name="lidar" default="hokuyo"/>
     <arg name="mapFile" default = "$(find rumba_autocar)/resources/myRoom/map.yaml"/>
+    <!-- Robot description -->
+    <include file="$(find rumba_autocar)/launch/model_show.launch" >
+        <arg name="include" value="true"/>
+    </include>
 
-    <!--rviz-->
-    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/rumba_autocar.rviz" />
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
     <!--rumba-->
-    <include file="$(find create_bringup)/launch/create_2.launch"/>
+    <node name="create_driver" pkg="create_driver" type="create_driver" output="screen">
+        <rosparam command="load" file="$(arg config)" />
+        <param name="robot_model" value="CREATE_2" />
+    </node>
+
     <!--joystick-->
     <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
     <node name="joy_node" pkg="joy" type="joy_node"/>
+
     <!--lidar-->
-    <node pkg="tf" type="static_transform_publisher" name="base_transform" args="0 0 0.07 0 0 0 base_link camera_link 100"/>
-    <node pkg="tf" type="static_transform_publisher" name="lidar_tf" args="0.1 0 0.06 0 0 0 camera_link lidar_link 100"/>
-    <node name="urg_node" pkg="urg_node" type="urg_node">
-        <param name="ip_address" value="192.168.6.119"/>
-        <param name="frame_id" value="lidar_link"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_transform" args="0 0 0.07 0 0 0 base_link robotBase_link 100"/>
+    <group if="$(eval lidar == 'hokuyo')">
+        <node pkg="tf" type="static_transform_publisher" name="lidar_tf" args="0.1 0 0.06 0 0 0 robotBase_link lidar_link 100"/>
+        <node name="urg_node" pkg="urg_node" type="urg_node">
+            <param name="ip_address" value="192.168.6.119"/>
+            <param name="frame_id" value="lidar_link"/>
+        </node>
+    </group>
+    <group if="$(eval lidar == 'rplidar')">
+        <node pkg="tf" type="static_transform_publisher" name="lidar_tf" args="0.1 0 0.06 0 0 0 robotBase_link lidar_link 100"/>
+        <include file="$(find rplidar_ros)/launch/rplidar.launch" >
+            <arg name="serial" default="/dev/ttyUSB1"/>
+            <arg name="frame_id" default="lidar_link"/>
+        </include>
+    </group>
+    <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+        <rosparam command="load" file="$(find rumba_autocar)/config/laser_filter.yaml"/>
     </node>
 
     <group if="$(arg use_imu)">
+        <node pkg="tf" type="static_transform_publisher" name="imu_tf" args="0 0 0.07 0 0 0 base_link imu_opt 100"/>
         <!--real sense for imu-->
         <arg name="offline"          default="false"/>
         <include unless="$(arg offline)"
-            file="$(find realsense2_camera)/launch/rs_camera.launch">
+        file="$(find realsense2_camera)/launch/rs_camera.launch">
             <arg name="enable_gyro" value="true"/>
             <arg name="enable_accel" value="true"/>
             <arg name="enable_depth" value="false"/>
@@ -39,17 +60,18 @@
             <param name="_publish_tf" type="bool" value="false" />
             <param name="_world_frame" type="string" value="enu" />
             <remap from="/imu/data_raw" to="/camera/imu"/>
+            <param name="fixed_frame" type="string" value="camera_link" />
         </node>
 
         <node name="imu_to_pose" pkg="rumba_autocar" type="imu_to_pose">
-            <remap from="imu"  to="/camera/imu"/>
+            <remap from="imu"  to="/imu/data"/>
         </node>
         <!--odometry-->
         <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
             <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
             <remap from="/odometry/filtered" to="fusion/odom" />
             <remap from="odom0" to="odom" />
-            <remap from="imu0"  to="/camera/imu" />
+            <remap from="imu0"  to="/imu/data" />
         </node>
     </group>
 
@@ -61,10 +83,14 @@
             <param name="base_frame" value="base_link" />
             <param name="odom_frame" value="odom" />
             <param name="map_frame"  value="map" />
+            <remap from="scan"  to="scan_filtered"/>
         </node>
         <!-- move_base -->
         <group if="$(arg move_base)">
             <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+                <rosparam file="$(find rumba_autocar)/config/move_base/move_base_params.yaml" command="load" />
+                <rosparam file="$(find rumba_autocar)/config/move_base/costmap_common_params.yaml" command="load" ns="global_costmap" />
+                <rosparam file="$(find rumba_autocar)/config/move_base/costmap_common_params.yaml" command="load" ns="local_costmap" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
                 <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
@@ -72,7 +98,7 @@
                 <param name="global_costmap/global_frame" value="map" />
                 <param name="global_costmap/robot_base_frame" value="base_link" />
                 <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
-                <param name="local_costmap/laser_scan_sensor/topic" value="scan" />
+                <param name="local_costmap/laser_scan_sensor/topic" value="scan_filter" />
                 <param name="local_costmap/global_frame" value="odom" />
                 <param name="local_costmap/robot_base_frame" value="base_link" />
             </node>
@@ -90,6 +116,7 @@
             <param name="base_frame_id" value="base_link" />
             <param name="odom_frame_id" value="odom" />
             <param name="global_frame_id" value="map" />
+            <remap from="scan"  to="scan_filtered"/>
         </node>
         <!-- move_base -->
         <group if="$(arg move_base)">
@@ -101,12 +128,16 @@
                 <param name="global_costmap/global_frame" value="map" />
                 <param name="global_costmap/robot_base_frame" value="base_link" />
                 <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
-                <param name="local_costmap/laser_scan_sensor/topic" value="scan" />
+                <param name="local_costmap/laser_scan_sensor/topic" value="scan_filter" />
                 <param name="local_costmap/global_frame" value="odom" />
                 <param name="local_costmap/robot_base_frame" value="base_link" />
             </node>
         </group>
     </group>
+
+     <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/rumba_autocar.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 
 </launch>

@@ -216,3 +216,8 @@ target_link_libraries(imu_to_pose
   ${catkin_LIBRARIES}
 )
 
+add_executable(wpRecord   src/wpRecord.cpp)
+target_link_libraries(wpRecord
+  ${catkin_LIBRARIES}
+)
+

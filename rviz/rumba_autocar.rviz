@@ -6,7 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Pose1
+        - /LaserScan1
+        - /TF1
+        - /TF1/Frames1
+        - /TF1/Tree1
       Splitter Ratio: 0.5
     Tree Height: 416
   - Class: rviz/Selection
@@ -27,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -69,6 +72,15 @@ Visualization Manager:
           Show Trail: false
           Value: true
         base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -133,9 +145,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 6069
+      Max Intensity: 7136
       Min Color: 0; 0; 0
-      Min Intensity: 101
+      Min Intensity: 125
       Name: LaserScan
       Position Transformer: XYZ
       Queue Size: 10
@@ -143,7 +155,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /scan
+      Topic: /scan_filtered
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -173,11 +185,137 @@ Visualization Manager:
       Topic: /imu_pose
       Unreliable: false
       Value: true
+    - Class: jsk_rviz_plugin/TFTrajectory
+      Enabled: true
+      Name: TFTrajectory
+      Value: true
+      color: 25; 255; 240
+      duration: 1000
+      frame: base_link
+      line_width: 0.009999999776482582
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_footprint:
+          Value: false
+        base_link:
+          Value: true
+        camera_bottom_screw_frame:
+          Value: false
+        camera_link:
+          Value: false
+        front_wheel_link:
+          Value: false
+        gyro_link:
+          Value: false
+        left_cliff_sensor_link:
+          Value: false
+        left_wheel_link:
+          Value: false
+        leftfront_cliff_sensor_link:
+          Value: false
+        lidar_link:
+          Value: false
+        map:
+          Value: true
+        odom:
+          Value: true
+        right_cliff_sensor_link:
+          Value: false
+        right_wheel_link:
+          Value: false
+        rightfront_cliff_sensor_link:
+          Value: false
+        robotBase_link:
+          Value: true
+        wall_sensor_link:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          odom:
+            base_footprint:
+              base_link:
+                camera_bottom_screw_frame:
+                  camera_link:
+                    {}
+                front_wheel_link:
+                  {}
+                gyro_link:
+                  {}
+                left_cliff_sensor_link:
+                  {}
+                left_wheel_link:
+                  {}
+                leftfront_cliff_sensor_link:
+                  {}
+                right_cliff_sensor_link:
+                  {}
+                right_wheel_link:
+                  {}
+                rightfront_cliff_sensor_link:
+                  {}
+                robotBase_link:
+                  lidar_link:
+                    {}
+                wall_sensor_link:
+                  {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /move_base/TrajectoryPlannerROS/local_plan
+      Unreliable: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: localCostMap
+      Topic: /move_base/global_costmap/costmap
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: globalCostMap
+      Topic: /move_base/global_costmap/costmap
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -201,7 +339,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.468571662902832
+      Distance: 3.5131025314331055
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -216,10 +354,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4953976571559906
+      Pitch: 1.0547960996627808
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.6553863286972046
+      Yaw: 2.805384874343872
     Saved: ~
 Window Geometry:
   Displays:

@@ -6,7 +6,13 @@ geometry_msgs::PoseStamped ps_msg;
 void imu_callback(const sensor_msgs::Imu& imu_msg)
 {
     ps_msg.header = imu_msg.header;
-    ps_msg.pose.orientation = imu_msg.orientation;
+    //ps_msg.pose.orientation = imu_msg.orientation;
+    ps_msg.pose.orientation.w = imu_msg.orientation.x;
+    //ps_msg.pose.orientation.x = imu_msg.orientation.y;
+    //ps_msg.pose.orientation.y = imu_msg.orientation.z;
+    ps_msg.pose.orientation.x = 0;
+    ps_msg.pose.orientation.y = 0;
+    ps_msg.pose.orientation.z = imu_msg.orientation.w;
 }
 
 int main(int argc, char **argv)
