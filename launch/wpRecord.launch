@@ -18,8 +18,9 @@
         <param name="loop_rate" value="$(arg loop_rate)"/>
     </node>
 
-    <node name="csv_output" pkg="rumba_autocar" type="csv_output">
+    <node name="csv_out" pkg="rumba_autocar" type="csv_out">
         <param name="filePath" value="$(arg filePath)"/>
+        <remap from="csv_array"  to="path2csv"/>
     </node>
 
 </launch>

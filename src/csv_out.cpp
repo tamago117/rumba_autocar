@@ -58,8 +58,8 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::NodeHandle pn("~");
     pn.getParam("filePath", filePath);
-    ros::Subscriber sub = nh.subscribe("sensorValue", 10, callback);
-    filePath = filePath + nowDay() + ".csv";
+    ros::Subscriber sub = nh.subscribe("csv_array", 10, callback);
+    filePath = filePath  +"_" + nowDay() + ".csv";
 
     while(ros::ok())
     {
