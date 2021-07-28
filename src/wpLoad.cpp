@@ -8,10 +8,10 @@
 */
 
 #include <ros/ros.h>
-#include <std_msgs/PoseStamped>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
-#include "rumba_autocar/csv_input.h"
+#include <rumba_autocar/csv_input.h>
 
 int main(int argc, char **argv)
 {
@@ -19,21 +19,38 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
     //csv file nameの読み込み
-    std::string filePath;
+    std::string filePath, map_id;
     pnh.getParam("filePath", filePath);
     pnh.param<std::string>("map_frame_id", map_id, "map");
+
     //csv読み込み
-    csv::csv_input(filePath);
+    csv::csv_input csv(filePath);
 
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("wayPoint/path", 10);
 
-    std_msgs::PoseStamped pose;
+    geometry_msgs::PoseStamped pose;
     nav_msgs::Path path;
+    for(int i = 0; i < csv.lineNum(); ++i)
+    {
+        pose.header.frame_id = map_id;
+        pose.header.stamp = ros::Time::now();
+        pose.pose.position.x = csv.readCSV(i, 0);
+        pose.pose.position.y = csv.readCSV(i, 1);
+        pose.pose.position.z = csv.readCSV(i, 2);
+        pose.pose.orientation.x = csv.readCSV(i, 3);
+        pose.pose.orientation.y = csv.readCSV(i, 4);
+        pose.pose.orientation.z = csv.readCSV(i, 5);
+        pose.pose.orientation.w = csv.readCSV(i, 6);
+
+        path.poses.push_back(pose);
+    }
+    path.header.frame_id = map_id;
+    path.header.stamp = ros::Time::now();
 
     ros::Rate loop_rate(10);
     while(ros::ok())
     {
-        pub.publish(ps_msg);
+        path_pub.publish(path);
         ros::spinOnce();
         loop_rate.sleep();
     }

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="filePath" value="$(find rumba_autocar)/csv/way1.csv"/>
+
+    <node name="wpLoad" pkg="rumba_autocar" type="wpLoad" output="screen">
+        <param name="filePath" value="$(arg filePath)"/>
+        <param name="map_frame_id" value="map"/>
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz" required="true" />
+
+</launch>
