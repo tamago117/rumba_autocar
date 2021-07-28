@@ -67,6 +67,12 @@ csv_input::csv_input(const std::string filePath)
     int i=0;
 
     std::ifstream ifs(filePath);
+    std::cout << 1 << std::endl;
+    // 開かなかったらエラー
+    if (!ifs){
+        //std::cout << "Error! File can not be opened"<<std::endl;
+    }
+
     while (getline(ifs, line)) {
         strcon[i] = split(line, ",");
         i++;

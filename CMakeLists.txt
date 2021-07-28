@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -218,6 +219,11 @@ target_link_libraries(imu_to_pose
 
 add_executable(wpRecord   src/wpRecord.cpp)
 target_link_libraries(wpRecord
+  ${catkin_LIBRARIES}
+)
+
+add_executable(csv_out   src/csv_out.cpp)
+target_link_libraries(csv_out
   ${catkin_LIBRARIES}
 )
 

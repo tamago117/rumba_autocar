@@ -10,6 +10,7 @@
 #include <ros/ros.h>
 #include <iostream>
 #include <string>
+#include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
@@ -21,6 +22,8 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "wpRecord");
     ros::NodeHandle nh;
     ros::NodeHandle pn("~");
+
+    ros::Publisher pub = nh.advertise<std_msgs::Float32MultiArray>("path2csv", 10);
 
     std::string map_id, base_id;
     pn.param<std::string>("map_frame_id",map_id,"map");
@@ -49,12 +52,26 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(rate);
     while (ros::ok())
     {
-        geometry_msgs::Pose pose;
+        /*geometry_msgs::Pose pose;
         pose.position.x = tfStamped.transform.translation.x;
         pose.position.y = tfStamped.transform.translation.y;
         pose.position.z = tfStamped.transform.translation.z;
         pose.orientation = tfStamped.transform.rotation;
-        ROS_INFO("position x:%f,y:%f,z:%f orientation x:%f,y:%f,z:%f,w:%f\n", pose.position.x, pose.position.y, pose.position, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+        ROS_INFO("position x:%f,y:%f,z:%f orientation x:%f,y:%f,z:%f,w:%f\n", pose.position.x, pose.position.y, pose.position, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);*/
+
+        //csvdata : [x, y, z, q_x, q_y, q_z, q_w]
+        std_msgs::Float32MultiArray array;
+        array.data.resize(7);
+        array.data[0] = tfStamped.transform.translation.x;
+        array.data[1] = tfStamped.transform.translation.y;
+        array.data[2] = tfStamped.transform.translation.z;
+        array.data[3] = tfStamped.transform.rotation.x;
+        array.data[4] = tfStamped.transform.rotation.y;
+        array.data[5] = tfStamped.transform.rotation.z;
+        array.data[6] = tfStamped.transform.rotation.w;
+
+        pub.publish(array);
+
         ros::spinOnce();
         loop_rate.sleep();
     }
