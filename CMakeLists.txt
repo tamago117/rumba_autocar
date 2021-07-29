@@ -232,4 +232,9 @@ target_link_libraries(wpLoad
   ${catkin_LIBRARIES}
 )
 
+add_executable(path_track   src/path_track.cpp)
+target_link_libraries(path_track
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)

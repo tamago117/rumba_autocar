@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
     std::string map_id, base_id;
     pn.param<std::string>("map_frame_id",map_id,"map");
-    pn.param<std::string>("base_link_id",base_id,"base_link");
+    pn.param<std::string>("base_link_frame_id",base_id,"base_link");
     int rate;
     pn.param<int>("loop_rate", rate, 50);
 
