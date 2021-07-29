@@ -24,17 +24,17 @@ public:
     geometry_msgs::PoseStamped getPoseStamped();
     geometry_msgs::Pose getPose();
     double getRoll();
-    double Pitch();
-    double Yaw();
+    double getPitch();
+    double getYaw();
     double norm();
 private:
     geometry_msgs::TransformStamped tfStamp;
     geometry_msgs::PoseStamped poseStamp;
-    void quat2rpy(double& roll, double& pitch, double& yaw)
+    void quat2rpy(double& roll, double& pitch, double& yaw);
 
 };
 
-tf_position::tf_position(std::string base_id, std::string child_id, double rate) : nh() ,tfBuffer() ,tfListener(tfBuffer)
+tf_position::tf_position(std::string base_id, std::string child_id, double rate)
 {
     ros::NodeHandle nh;
     tf2_ros::Buffer tfBuffer;
@@ -72,19 +72,19 @@ geometry_msgs::Pose tf_position::getPose()
 
 double tf_position::getRoll(){
     double roll,pitch,yaw;
-    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    quat2rpy(roll, pitch, yaw);
     return roll;
 }
 
 double tf_position::getYaw(){
     double roll,pitch,yaw;
-    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    quat2rpy(roll, pitch, yaw);
     return yaw;
 }
 
 double tf_position::getPitch(){
     double roll,pitch,yaw;
-    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    quat2rpy(roll, pitch, yaw);
     return pitch;
 }
 
