@@ -22,6 +22,7 @@ private:
     car_model model;
     double wheel_tred;
     double quat2yaw(geometry_msgs::Quaternion geometry_quat);
+    double double_constrain(double val,double down_limit,double up_limit){
 public:
     PurePursuit();
     PurePursuit(double wheel_tred_);
@@ -49,8 +50,25 @@ double PurePursuit::getYawVel(const geometry_msgs::PoseStamped& nowPos, const ge
     double tarYaw = quat2yaw(tarPos.pose.orientation);
 
     double L = sqrt(pow(nowX, 2)+pow(nowY, 2)) - sqrt(pow(tarX, 2)+pow(tarY, 2));
-    double angle = atan2(tarY-nowY, tarX-nowX) - nowYaw;
-    double alfa = angle;
+
+    //角度が180度を超えないようにする
+    double angle1 = atan2(tarY-nowY, tarX-nowX) - nowYaw + 2*M_PI;
+    double angle2 = atan2(tarY-nowY, tarX-nowX) - nowYaw;
+    double angle3 = atan2(tarY-nowY, tarX-nowX) - nowYaw - 2*M_PI;
+
+    double alfa;
+    if(abs(angle1)<abs(angle2)&&abs(angle1)<abs(angle3)){
+        alfa=angle1;
+    }
+    else if(abs(angle2)<abs(angle1)&&abs(angle2)<abs(angle3)){
+        alfa=angle2;
+    }
+    else if(abs(angle3)<abs(angle1)&&abs(angle3)<abs(angle2)){
+        alfa=angle3;
+    }
+
+    alfa=double_constrain(alfa,-M_PI/2.0,M_PI/2.0);
+
 
     if(model == car_model::wheel_2){
         return 2.0*forwardV*sin(alfa)/L;
@@ -91,6 +109,16 @@ double quat2yaw(geometry_msgs::Quaternion geometry_quat)
     tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);  //rpy are Pass by Reference
 
     return yaw;
+}
+
+double PurePursuit::double_constrain(double val,double down_limit,double up_limit){
+  if(val>up_limit){
+    return up_limit;
+  }
+  if(val<down_limit){
+    return down_limit;
+  }
+  return val;
 }
 
 }//end namespace pp
