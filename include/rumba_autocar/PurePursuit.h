@@ -75,7 +75,6 @@ double PurePursuit::getYawVel(const geometry_msgs::PoseStamped& nowPos, const ge
     }else if(model == car_model::steer){
         return atan2(2*wheel_tred*sin(alfa), L);
     }
-    
 
 }
 
