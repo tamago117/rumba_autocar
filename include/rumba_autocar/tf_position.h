@@ -12,9 +12,9 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <turtlesim/Spawn.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf/transform_broadcaster.h>
 #include <string>
 
 class tf_position
@@ -23,9 +23,14 @@ public:
     tf_position(std::string base_id, std::string child_id, double rate);
     geometry_msgs::PoseStamped getPoseStamped();
     geometry_msgs::Pose getPose();
+    double getRoll();
+    double Pitch();
+    double Yaw();
+    double norm();
 private:
     geometry_msgs::TransformStamped tfStamp;
     geometry_msgs::PoseStamped poseStamp;
+    void quat2rpy(double& roll, double& pitch, double& yaw)
 
 };
 
@@ -63,4 +68,37 @@ geometry_msgs::PoseStamped tf_position::getPoseStamped()
 geometry_msgs::Pose tf_position::getPose()
 {
     return poseStamp.pose;
+}
+
+double tf_position::getRoll(){
+    double roll,pitch,yaw;
+    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    return roll;
+}
+
+double tf_position::getYaw(){
+    double roll,pitch,yaw;
+    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    return yaw;
+}
+
+double tf_position::getPitch(){
+    double roll,pitch,yaw;
+    geometry_quat_to_rpy(roll, pitch, yaw, pos.pose.orientation);
+    return pitch;
+}
+
+void tf_position::quat2rpy(double& roll, double& pitch, double& yaw)
+{
+    tf::Quaternion quat;
+    quaternionMsgToTF(poseStamp.pose.orientation, quat);
+    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);  //rpy are Pass by Reference
+}
+
+double tf_position::norm()
+{
+    double x = poseStamp.pose.position.x;
+    double y = poseStamp.pose.position.y;
+    double z = poseStamp.pose.position.z;
+    return sqrt(x*x + y*y + z*z);
 }
