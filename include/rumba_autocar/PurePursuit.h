@@ -21,22 +21,23 @@ class PurePursuit
 
 private:
     car_model model;
+    double max_angular_vel;
     double wheel_tred;
     double quat2yaw(const geometry_msgs::Quaternion& geometry_quat);
     double double_constrain(double val,double down_limit,double up_limit);
 public:
-    PurePursuit();
-    PurePursuit(double wheel_tred_);
+    PurePursuit(double max_angular_vel_);
+    PurePursuit(double wheel_tred_, double max_angular_vel_);
     double getYawVel(const geometry_msgs::PoseStamped& nowPos, const geometry_msgs::PoseStamped& tarPos, double forwardV);
     double getYawVel(const geometry_msgs::Pose& nowPos, const  geometry_msgs::Pose& tarPos, double forwardV);
 };
 
-PurePursuit::PurePursuit()
+PurePursuit::PurePursuit(double max_angular_vel_) : max_angular_vel(max_angular_vel_)
 {
     model = car_model::wheel_2;
 }
 
-PurePursuit::PurePursuit(double wheel_tred_):wheel_tred(wheel_tred_)
+PurePursuit::PurePursuit(double wheel_tred_, double max_angular_vel_):wheel_tred(wheel_tred_) ,max_angular_vel(max_angular_vel_)
 {
     model = car_model::steer;
 }
@@ -72,9 +73,16 @@ double PurePursuit::getYawVel(const geometry_msgs::PoseStamped& nowPos, const ge
 
 
     if(model == car_model::wheel_2){
-        return 2.0*forwardV*sin(alfa)/L;
+        double angular_vel = 2.0*forwardV*sin(alfa)/L;
+        angular_vel = double_constrain(angular_vel, -max_angular_vel, max_angular_vel);
+
+        return angular_vel;
+
     }else if(model == car_model::steer){
-        return atan2(2*wheel_tred*sin(alfa), L);
+        double angular_vel = atan2(2*wheel_tred*sin(alfa), L);
+        angular_vel = double_constrain(angular_vel, -max_angular_vel, max_angular_vel);
+        
+        return angular_vel;
     }
 
 }
@@ -110,9 +118,13 @@ double PurePursuit::getYawVel(const geometry_msgs::Pose& nowPos, const geometry_
 
 
     if(model == car_model::wheel_2){
-        return 2.0*forwardV*sin(alfa)/L;
+        double angular_vel = 2.0*forwardV*sin(alfa)/L;
+        angular_vel = double_constrain(angular_vel, -max_angular_vel, max_angular_vel);
+        return angular_vel;
     }else if(model == car_model::steer){
-        return atan2(2*wheel_tred*sin(alfa), L);
+        double angular_vel = atan2(2*wheel_tred*sin(alfa), L);
+        angular_vel = double_constrain(angular_vel, -max_angular_vel, max_angular_vel);
+        return angular_vel;
     }
 
 }
