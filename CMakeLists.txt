@@ -237,4 +237,9 @@ target_link_libraries(path_track
   ${catkin_LIBRARIES}
 )
 
+add_executable(wpControl   src/wpControl.cpp)
+target_link_libraries(wpControl
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)

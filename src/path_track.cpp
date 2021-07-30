@@ -1,3 +1,10 @@
+/**
+* @file path_track.cpp
+* @brief tracking target way point
+* @author Michikuni Eguchi
+* @date 2021.7.29
+* @details 受け取ったtarget way point に追従するようにcmd_velをpublishする
+*/
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include <nav_msgs/Path.h>
@@ -7,7 +14,7 @@
 #include <string>
 
 int targetWp = 0;
-void nowWp_callback(const std_msgs::Int32& targetWp_num)
+void targetWp_callback(const std_msgs::Int32& targetWp_num)
 {
     targetWp = targetWp_num.data;
 }
@@ -32,7 +39,7 @@ int main(int argc, char** argv)
     double max_angular_vel;
     pnh.param<double>("max_angular_vel", max_angular_vel, 1);
 
-    ros::Subscriber nowWp_sub = nh.subscribe("nowWp", 50, nowWp_callback);
+    ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("roomba/cmd_vel", 10);
 
