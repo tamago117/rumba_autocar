@@ -60,14 +60,11 @@ int main(int argc, char** argv)
                 //waypoint_pitchになるよう target way pointの更新
                 while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= wp_pitch))
                 {
-                    std::cout<<"dis  "<<poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped())<<std::endl;
                     //終端
                     if(targetWp.data > (path.poses.size()-1)){
-                        std::cout<<path.poses.size()<<" "<<targetWp.data<<std::endl;
                         break;
                     }
                     targetWp.data++;
-                    std::cout<<"targetWp"<<targetWp.data<<std::endl;
                 }
             }
         }
