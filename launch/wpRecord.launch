@@ -8,9 +8,13 @@
     <include file="$(find rumba_autocar)/launch/basicNavigation.launch">
         <arg name="nav_mode" default="mapping"/>
         <arg name="move_base" default="false"/>
-        <arg name="use_imu" default="false"/>
-        <arg name="lidar" default="hokuyo"/>
     </include>
+
+    <!--joystick-->
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba">
+        <remap from="cmd_vel" to="roomba/cmd_vel"/>
+    </node>
+    <node name="joy_node" pkg="joy" type="joy_node"/>
 
     <node name="wpRecord" pkg="rumba_autocar" type="wpRecord" output="screen">
         <param name="map_frame_id" value="$(arg map_frame_id)"/>
@@ -23,4 +27,8 @@
         <remap from="csv_array"  to="path2csv"/>
     </node>
 
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/rumba_autocar.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    
 </launch>

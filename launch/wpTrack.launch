@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="filePath" value="$(find rumba_autocar)/csv/way1.csv"/>
+
+    <!--joystick-->
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+
+    <include file="$(find rumba_autocar)/launch/basicNavigation.launch">
+        <arg name="nav_mode" default="slam"/>
+        <arg name="move_base" default="false"/>
+    </include>
+
+    <node name="wpLoad" pkg="rumba_autocar" type="wpLoad" output="screen">
+        <param name="filePath" value="$(arg filePath)"/>
+        <param name="map_frame_id" value="map"/>
+    </node>
+    <node name="wpControl" pkg="rumba_autocar" type="wpControl" output="screen">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="waypoint_pitch" value="0.1"/>
+        <param name="loop_rate" value="100"/>
+        <remap from="path" to="wayPoint/path"/>
+    </node>
+    <node name="path_track" pkg="rumba_autocar" type="path_track" output="screen">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="100"/>
+        <param name="max_angular_vel" value="1.5"/>
+        <remap from="path" to="wayPoint/path"/>
+    </node>
+
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/wpTrack.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>

@@ -28,7 +28,7 @@ private:
 public:
     PurePursuit(double max_angular_vel_);
     PurePursuit(double wheel_tred_, double max_angular_vel_);
-    double getYawVel(const geometry_msgs::PoseStamped& nowPos, const geometry_msgs::PoseStamped& tarPos, double forwardV);
+    double getYawVel(geometry_msgs::PoseStamped nowPos, const geometry_msgs::PoseStamped& tarPos, double forwardV);
     double getYawVel(const geometry_msgs::Pose& nowPos, const  geometry_msgs::Pose& tarPos, double forwardV);
 };
 
@@ -42,16 +42,15 @@ PurePursuit::PurePursuit(double wheel_tred_, double max_angular_vel_):wheel_tred
     model = car_model::steer;
 }
 
-double PurePursuit::getYawVel(const geometry_msgs::PoseStamped& nowPos, const geometry_msgs::PoseStamped& tarPos, double forwardV)
+double PurePursuit::getYawVel(geometry_msgs::PoseStamped nowPos, const geometry_msgs::PoseStamped& tarPos, double forwardV)
 {
     double nowX = nowPos.pose.position.x;//m
     double nowY = nowPos.pose.position.y;//m
     double nowYaw = quat2yaw(nowPos.pose.orientation);//rad
     double tarX = tarPos.pose.position.x;
     double tarY = tarPos.pose.position.y;
-    double tarYaw = quat2yaw(tarPos.pose.orientation);
-
-    double L = sqrt(pow(nowX, 2)+pow(nowY, 2)) - sqrt(pow(tarX, 2)+pow(tarY, 2));
+    
+    double L = sqrt(pow(tarX - nowX, 2) + pow(tarY - nowY, 2));
 
     //角度が180度を超えないようにする
     double angle1 = atan2(tarY-nowY, tarX-nowX) - nowYaw + 2*M_PI;
@@ -81,7 +80,7 @@ double PurePursuit::getYawVel(const geometry_msgs::PoseStamped& nowPos, const ge
     }else if(model == car_model::steer){
         double angular_vel = atan2(2*wheel_tred*sin(alfa), L);
         angular_vel = double_constrain(angular_vel, -max_angular_vel, max_angular_vel);
-        
+
         return angular_vel;
     }
 
@@ -95,6 +94,8 @@ double PurePursuit::getYawVel(const geometry_msgs::Pose& nowPos, const geometry_
     double tarX = tarPos.position.x;
     double tarY = tarPos.position.y;
     double tarYaw = quat2yaw(tarPos.orientation);
+
+    std::cout<<nowYaw<<std::endl;
 
     double L = sqrt(pow(nowX, 2)+pow(nowY, 2)) - sqrt(pow(tarX, 2)+pow(tarY, 2));
 
@@ -137,6 +138,7 @@ double PurePursuit::quat2yaw(const geometry_msgs::Quaternion& geometry_quat)
 
     quaternionMsgToTF(geometry_quat, quat);
     tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);  //rpy are Pass by Reference
+    //std::cout<<yaw<<std::endl;
 
     return yaw;
 }

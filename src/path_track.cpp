@@ -12,6 +12,14 @@
 #include <rumba_autocar/PurePursuit.h>
 #include <rumba_autocar/tf_position.h>
 #include <string>
+#include <iostream>
+
+geometry_msgs::Twist cmd_vel;
+void cmd_callback(const geometry_msgs::Twist cmd_message)
+{
+    //前進だけ外部入力に委ねる
+    cmd_vel.linear.x = cmd_message.linear.x;
+}
 
 int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
@@ -35,10 +43,11 @@ int main(int argc, char** argv)
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
     pnh.param<std::string>("map_frame_id", map_id, "map");
     double rate;
-    pnh.param<double>("rate", rate, 100);
+    pnh.param<double>("loop_rate", rate, 100);
     double max_angular_vel;
     pnh.param<double>("max_angular_vel", max_angular_vel, 1);
 
+    ros::Subscriber cmd_sub = nh.subscribe("cmd_vel", 10, cmd_callback);
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("roomba/cmd_vel", 10);
@@ -48,14 +57,14 @@ int main(int argc, char** argv)
 
     ros::Rate loop_rate(rate);
 
-    geometry_msgs::Twist cmd_vel;
+    
     while(ros::ok())
     {
-
-        cmd_vel.linear.x = 0.5;
-        cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), path.poses[targetWp] , cmd_vel.linear.x);
-
-        cmd_pub.publish(cmd_vel);
+        if(path.poses.size()>0){
+            cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), path.poses[targetWp] , cmd_vel.linear.x);
+            cmd_pub.publish(cmd_vel);
+        }
+        
 
         ros::spinOnce();
         loop_rate.sleep();

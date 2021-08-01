@@ -16,6 +16,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf/transform_broadcaster.h>
 #include <string>
+#include <iostream>
 
 class tf_position
 {
@@ -28,16 +29,11 @@ public:
     double getYaw();
     double norm();
 
-    tf_position operator=(const tf_position& pose);
-    tf_position operator+=(const tf_position& pose);
-    tf_position operator-=(const tf_position& pose);
-    tf_position operator*=(double gain);
-
-    tf_position operator+(const tf_position& pose1, const tf_position& pose2);
-    tf_position operator-(const tf_position& pose1, const tf_position& pose2);
-    tf_position operator*(double gain);
-
 private:
+    ros::NodeHandle nh;
+    ros::Timer timer;
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener;
     std::string base_id, child_id;
     geometry_msgs::TransformStamped tfStamp;
     geometry_msgs::PoseStamped poseStamp;
@@ -45,13 +41,9 @@ private:
 
 };
 
-tf_position::tf_position(std::string base_id_, std::string child_id_, double rate) : base_id(base_id_), child_id(child_id_)
+tf_position::tf_position(std::string base_id_, std::string child_id_, double rate) : base_id(base_id_), child_id(child_id_), nh(), tfBuffer(), tfListener(tfBuffer)
 {
-    ros::NodeHandle nh;
-    tf2_ros::Buffer tfBuffer;
-    tf2_ros::TransformListener tfListener(tfBuffer);
-
-    ros::Timer timer = nh.createTimer(ros::Duration(1.0/rate), [&](const ros::TimerEvent& e)
+    timer = nh.createTimer(ros::Duration(1.0/rate), [&](const ros::TimerEvent& e)
     {
         try
         {
@@ -113,57 +105,3 @@ double tf_position::norm()
     double z = poseStamp.pose.position.z;
     return sqrt(x*x + y*y + z*z);
 }
-
-tf_position tf_position::operator+=(const tf_position& pose)
-{
-    poseStamp.pose.position.x += pose.poseStamp.pose.position.x;
-    poseStamp.pose.position.y += pose.poseStamp.pose.position.y;
-    poseStamp.pose.position.z += pose.poseStamp.pose.position.z;
-    return *this
-}
-
-tf_position tf_position::operator+=(const tf_position& pose)
-{
-    poseStamp.pose.position.x += pose.poseStamp.pose.position.x;
-    poseStamp.pose.position.y += pose.poseStamp.pose.position.y;
-    poseStamp.pose.position.z += pose.poseStamp.pose.position.z;
-    return *this
-}
-
-tf_position tf_position::operator-=(const tf_position& pose)
-{
-    poseStamp.pose.position.x -= pose.poseStamp.pose.position.x;
-    poseStamp.pose.position.y -= pose.poseStamp.pose.position.y;
-    poseStamp.pose.position.z -= pose.poseStamp.pose.position.z;
-    return *this
-}
-
-tf_position tf_position::operator*=(double gain)
-{
-    poseStamp.pose.position.x *= gain;
-    poseStamp.pose.position.y *= gain;
-    poseStamp.pose.position.z *= gain;
-    return *this
-}
-
-tf_position tf_position::operator+(const tf_position& pose1, const tf_position& pose2)
-{
-    return pose1 += pose2;
-}
-
-tf_position tf_position::operator-(const tf_position& pose1, const tf_position& pose2)
-{
-    return pose1 -= pose2;
-}
-
-tf_position tf_position::operator*(double gain)
-{
-    poseStamp.pose.position.x *= gain;
-    poseStamp.pose.position.y *= gain;
-    poseStamp.pose.position.z *= gain;
-
-    return poseStamp;
-}
-
-
-    
