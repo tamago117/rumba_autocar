@@ -1,0 +1,92 @@
+#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/Path.h>
+#include "rumba_autocar/dwa.h"
+#include "rumba_autocar/tf_position.h"
+
+std::string runMode = "stop";
+void mode_callback(const std_msgs::String& mode)
+{
+    runMode = mode.data;
+}
+
+int targetWp = 0;
+void targetWp_callback(const std_msgs::Int32& targetWp_num)
+{
+    targetWp = targetWp_num.data;
+}
+
+nav_msgs::Path path;
+void path_callback(const nav_msgs::Path& path_message)
+{
+    path = path_message;
+}
+
+nav_msgs::OccupancyGrid costmap;
+void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
+{
+    costmap = costmap_message;
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "dwa_path_plan");
+    ros::NodeHandle nh;
+    ros::NodeHandle pnh("~");
+
+    std::string map_id, base_link_id;
+    pnh.param<std::string>("map_frame_id", map_id, "map");
+    pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
+    double rate;
+    pnh.param<double>("loop_rate", rate, 100);
+
+    ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("dwa_path_plan/trajectory", 10);
+    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+    ros::Subscriber mode_sub = nh.subscribe("mode_select/mode", 10, mode_callback);
+    ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
+    ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
+    ros::Subscriber cost_sub = nh.subscribe("dwa_path_plan/costmap", 10, cost_callback);
+
+    ros::Rate loop_rate(rate);
+
+    geometry_msgs::Twist cmd_vel;
+    nav_msgs::Path trajectory;
+    tf_position nowPosition(map_id, base_link_id, rate);
+    double preX = 0;
+    double preAngle = 0;
+
+    ctr::DWA dwa;
+    ctr::DWA::motionState nowState;
+    while(ros::ok())
+    {
+        //updata now position and velocity information
+        nowState.x = nowPosition.getPose().position.x;
+        nowState.y = nowPosition.getPose().position.y;
+        nowState.yawAngle = nowPosition.getYaw();
+        nowState.vel = (nowState.x - preX)/(1/rate);
+        nowState.yawVel = (nowState.yawAngle - preAngle)/(1/rate);
+
+        preX = nowState.x;
+        preAngle = nowState.yawAngle;
+
+        if(runMode == "start"){
+            //path planning by dynamic window approach
+            dwa.dwa_controll(nowState, path.poses[targetWp].pose, costmap);
+            dwa.get_result(cmd_vel, trajectory);
+        }else if(runMode == "stop"){
+            cmd_vel.linear.x = 0;
+            cmd_vel.angular.z = 0;
+        }
+
+        //publish cmd_vel and trajectory
+        cmd_pub.publish(cmd_vel);
+        path_pub.publish(trajectory);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+    return 0;
+}

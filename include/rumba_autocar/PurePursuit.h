@@ -9,7 +9,7 @@
 #include <iostream>
 #include <math.h>
 
-namespace pp{
+namespace ctr{
 
 class PurePursuit
 {
@@ -153,4 +153,4 @@ double PurePursuit::double_constrain(double val,double down_limit,double up_limi
   return val;
 }
 
-}//end namespace pp
+}//end namespace ctr

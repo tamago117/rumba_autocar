@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf2
+  costmap_2d
 )
 
 ## System dependencies are found with CMake's conventions
@@ -239,6 +240,16 @@ target_link_libraries(path_track
 
 add_executable(wpControl   src/wpControl.cpp)
 target_link_libraries(wpControl
+  ${catkin_LIBRARIES}
+)
+
+add_executable(costmap_node   src/costmap_node.cpp)
+target_link_libraries(costmap_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(dwa_path_plan   src/dwa_path_plan.cpp)
+target_link_libraries(dwa_path_plan
   ${catkin_LIBRARIES}
 )
 
