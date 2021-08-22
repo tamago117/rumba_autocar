@@ -9,6 +9,10 @@
     <mesh filename="package://create_description/meshes/create_2.dae" />
   </xacro:create_base>
 
+  <!--LRF-->
+  <xacro:include filename="$(find rumba_autocar)/xacro/LRF_macro.xacro" />
+  <xacro:laser_macro parent="base_link" prefix="lidar" xyz="0.09 0 0.13"/>
+
   <!--realsense-->
   <xacro:arg name="use_nominal_extrinsics" default="false" />
   <xacro:include filename="$(find realsense2_description)/urdf/_d435i.urdf.xacro"/>

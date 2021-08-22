@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="simulation" default="true"/>
     <arg name="map_frame_id" default="map"/>
     <arg name="base_link_frame_id" default="base_link"/>
     <arg name="loop_rate" default="50"/>
-    <arg name="filePath" value="$(find rumba_autocar)/csv/way1"/>
+    <arg name="fileName" default="way1"/>
 
-    <include file="$(find rumba_autocar)/launch/basicNavigation.launch">
+    <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
         <arg name="nav_mode" default="mapping"/>
-        <arg name="move_base" default="false"/>
+        <arg name="gazebo" value="$(arg simulation)"/>
     </include>
 
     <!--joystick-->
-    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba">
-        <remap from="cmd_vel" to="roomba/cmd_vel"/>
-    </node>
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
     <node name="joy_node" pkg="joy" type="joy_node"/>
 
     <node name="wpRecord" pkg="rumba_autocar" type="wpRecord" output="screen">
@@ -24,7 +23,7 @@
     </node>
 
     <node name="csv_out" pkg="rumba_autocar" type="csv_out">
-        <param name="filePath" value="$(arg filePath)"/>
+        <param name="filePath" value="$(find rumba_autocar)/csv/$(arg fileName)"/>
         <remap from="csv_array"  to="path2csv"/>
     </node>
 

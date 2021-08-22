@@ -1,0 +1,16 @@
+<launch>
+  <arg name="model" default="$(find rumba_autocar)/xacro/rumba_autocar.xacro" />
+  
+  <arg name="include" default="false"/>
+  <param name="robot_description" command="$(find xacro)/xacro.py $(arg model) --inorder" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <arg name="gui" default="True" />
+  <param name="use_gui" value="$(arg gui)" />
+
+  <group unless="$(arg include)">
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/model_show.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+  </group>
+</launch>

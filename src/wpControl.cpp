@@ -7,6 +7,7 @@
 */
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <iostream>
@@ -48,11 +49,17 @@ int main(int argc, char** argv)
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher wp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
+    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode_select/mode", 10);
 
     ros::Rate loop_rate(rate);
 
     bool trace_wp_mode = true;
     std_msgs::Int32 targetWp;
+
+    std_msgs::String mode_stop;
+    const std::string stop = "stop";
+    mode_stop.data = stop;
+    bool isStop = false;
     while(ros::ok())
     {
         if(path.poses.size()>0){
@@ -61,7 +68,7 @@ int main(int argc, char** argv)
                 while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= wp_pitch))
                 {
                     //終端
-                    if(targetWp.data > (path.poses.size()-1)){
+                    if(targetWp.data >= (path.poses.size()-1)){
                         break;
                     }
                     targetWp.data++;
@@ -69,7 +76,15 @@ int main(int argc, char** argv)
             }
         }
 
+        if(targetWp.data >= (path.poses.size()-1)){
+            if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= 0.2)
+                isStop = true;
+        }
+
         wp_pub.publish(targetWp);
+        if(isStop){
+            mode_pub.publish(mode_stop);
+        }
 
         ros::spinOnce();
         loop_rate.sleep();

@@ -1,0 +1,59 @@
+<robot name="dtw_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="laser_macro" params="parent prefix xyz">
+    <joint name="${prefix}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child  link="${prefix}_link"/>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+    </joint>
+    <link name="${prefix}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://rumba_autocar/xacro/meshes/DAE/LRF.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://rumba_autocar/xacro/meshes/STL/LRF.stl"/>
+        </geometry>
+      </collision>
+      <inertial>
+      <origin xyz="0 0 -0.0164"/>
+      <mass value="0.4"/>
+      <inertia ixx="0.000376666666667" ixy="0" ixz="0" iyy="0.000376666666667" iyz="0" izz="0.000326666666667"/>
+    </inertial>
+    </link>
+    <gazebo reference="${prefix}_link">
+      <sensor type="ray" name="${prefix}">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>true</visualize>
+        <update_rate>40</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-1.65806278939</min_angle>
+              <max_angle>1.65806278939</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.10</min>
+            <max>60.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.03</stddev>
+          </noise>
+        </ray>
+        <plugin name="gazebo_ros_lidar_controller" filename="libgazebo_ros_laser.so">
+          <topicName>/${prefix}_link/scan</topicName>
+          <frameName>${prefix}_link</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro> 
+</robot>

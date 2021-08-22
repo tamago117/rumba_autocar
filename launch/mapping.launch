@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="simulation" default="true"/>
+
+
+    <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
+        <arg name="nav_mode" default="mapping"/>
+        <arg name="gazebo" value="$(arg simulation)"/>
+    </include>
+
+    <!--joystick-->
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/mapping.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    
+</launch>

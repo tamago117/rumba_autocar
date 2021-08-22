@@ -170,8 +170,8 @@ std::vector<double> DWA::calc_dynamicWindow()
 
 void DWA::calc_controll_and_trajectory(std::vector<double> dw)
 {
-    double goalAngle_cost, goalDistance_cost, obstacle_cost, final_cost;
-    std::vector<double> goalAngle_costs, goalDistance_costs, obstacle_costs;
+    double goalAngle_cost, goalDistance_cost, obstacle_cost, speed_cost, final_cost;
+    std::vector<double> goalAngle_costs, goalDistance_costs, obstacle_costs, speed_costs;
     std::vector<std::vector<double>> velocity_array; //[v,w],[v,w].....
     std::vector<double> tmp_array(2); //[v, w]
     std::vector<motionState> trajectory; //[x, y, angle, v, w],....
@@ -196,6 +196,7 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
             goalAngle_costs.push_back(goalAngleCost(trajectory));
             goalDistance_costs.push_back(goalDistanceCost(trajectory));
             obstacle_costs.push_back(obstacleCost(trajectory));
+            //speed_costs.push_back(speedCost(trajectory));
 
         }
     }
@@ -203,14 +204,17 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
     goalAngle_costs = normalize(goalAngle_costs);
     goalDistance_costs = normalize(goalDistance_costs);
     obstacle_costs = normalize(obstacle_costs);
+    //speed_costs = normalize(speed_costs);
 
     //select largest cost trajectory
     for(int i=0; i<goalAngle_costs.size(); i++){
         goalAngle_cost = angleCost_gain * goalAngle_costs[i];
         goalDistance_cost = distanceCost_gain * goalDistance_costs[i];
         obstacle_cost = obstacleCost_gain * obstacle_costs[i];
+        //speed_cost = speedCost_gain * speed_costs[i];
 
         final_cost = goalAngle_cost + goalDistance_cost + obstacle_cost;
+        //final_cost = goalAngle_cost + speed_cost + obstacle_cost;
 
         if(final_cost < minCost){
             nav_msgs::Path bestTrajectory_temp;
@@ -299,9 +303,9 @@ double DWA::obstacleCost(const std::vector<motionState> trajectory)
 
         if(cost > maxCost){
             maxCost = cost;
-            if(maxCost == 100 || maxCost == 99){
+            /*if(maxCost == 100 || maxCost == 99){
                 return INFINITY;
-            }
+            }*/
         }
     }
 
