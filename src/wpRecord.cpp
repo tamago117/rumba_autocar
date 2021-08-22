@@ -11,12 +11,8 @@
 #include <iostream>
 #include <string>
 #include <std_msgs/Float32MultiArray.h>
-#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Twist.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <rumba_autocar/tf_position.h>
+#include "rumba_autocar/tf_position.h"
 
 //poseStamp間の距離
 double poseDistance(const geometry_msgs::Pose& pose1, const geometry_msgs::Pose& pose2)

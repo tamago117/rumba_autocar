@@ -253,4 +253,9 @@ target_link_libraries(dwa_path_plan
   ${catkin_LIBRARIES}
 )
 
+add_executable(wpVisualizer   src/wpVisualizer.cpp)
+target_link_libraries(wpVisualizer
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)

@@ -1,14 +1,17 @@
-maxSpeed : 2.0
-minSpeed : -0.5
-maxYaw_rate : 40 #[degree/s]
-maxAccel : 0.4
-maxYawVel_rate : 40 #[degree/ss]
-v_resolution : 0.1
-w_resolution : 1 #[degree/s]
-dt : 0.3
-predictTime : 3.0
-goalCost_gain : 0.15
-obstacleCost_gain : 0.5
-speedCost_gain : 0.2
+maxSpeed : 1.5
+minSpeed : -0.1
+maxYaw_rate : 100 #[degree/s]
+maxAccel : 2
+maxYawVel_rate : 80 #[degree/ss]
+v_resolution : 0.01
+w_resolution : 0.5 #[degree/s]
+dt : 0.05
+predictTime : 1
+angleCost_gain : 0.2
+distanceCost_gain : 0.2
+obstacleCost_gain : 0.05
 robot_stuck_value : 0.001
-robot_radius : 1.0
+
+map_frame_id : map
+base_link_frame_id : base_link
+loop_rate : 100

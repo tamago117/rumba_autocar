@@ -15,6 +15,7 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_broadcaster.h>
+#include <iostream>
 #include <math.h>
 #include <vector>
 #include <string>
@@ -49,12 +50,11 @@ private:
     double w_resolution;
     double dt;
     double predictTime;
-    double angle_gain;
-    double distance_gain;
+    double angleCost_gain;
+    double distanceCost_gain;
     double obstacleCost_gain;
     double speedCost_gain;
     double robot_stuck_value;
-    double robot_radius;
     /////////////////////////
     std::string map_id;
 
@@ -97,23 +97,22 @@ DWA::DWA()
     ros::NodeHandle pnh("~");
     //set config value
     pnh.param<double>("maxSpeed", maxSpeed, 2.0);
-    pnh.param<double>("minSpeed", maxSpeed, -0.5);
+    pnh.param<double>("minSpeed", minSpeed, -0.5);
     pnh.param<double>("maxYaw_rate", maxYaw_rate, 40);
     maxYaw_rate *= M_PI/180;
     pnh.param<double>("maxAccel", maxAccel, 0.4);
     pnh.param<double>("maxYawVel_rate", maxYawVel_rate, 40);
     maxYawVel_rate *= M_PI/180;
-    pnh.param<double>("v_resolution", v_resolution, 0.1);
-    pnh.param<double>("w_resolution", w_resolution, 1);
+    pnh.param<double>("v_resolution", v_resolution, 0.01);
+    pnh.param<double>("w_resolution", w_resolution, 0.005);
     w_resolution *= M_PI/180;
     pnh.param<double>("dt", dt, 0.3);
     pnh.param<double>("predictTime", predictTime, 3.0);
-    pnh.param<double>("angle_gain", angle_gain, 0.15);
-    pnh.param<double>("distance_gain", distance_gain, 0.2);
+    pnh.param<double>("angleCost_gain", angleCost_gain, 0.15);
+    pnh.param<double>("distanceCost_gain", distanceCost_gain, 0.2);
     pnh.param<double>("obstacleCost_gain", obstacleCost_gain, 0.5);
     pnh.param<double>("speedCost_gain", speedCost_gain, 0.2);
     pnh.param<double>("robot_stuck_value", robot_stuck_value, 0.001);
-    pnh.param<double>("robot_radius", robot_radius, 1.0);
     pnh.param<std::string>("map_frame_id", map_id, "map");
 }
 
@@ -143,10 +142,28 @@ std::vector<double> DWA::calc_dynamicWindow()
                            state.yawVel - maxYawVel_rate*dt,
                            state.yawVel + maxYawVel_rate*dt};
 
-    std::vector<double> dw{std::max(vs[0], vs[0]),
-                           std::min(vs[1], vs[1]),
-                           std::max(vs[2], vs[2]),
-                           std::min(vs[3], vs[3])};
+    //when the vd window is completely out of the vs window
+    if((state.vel - maxAccel*dt < minSpeed) && (state.vel + maxAccel*dt < minSpeed)){
+        vd[0] = minSpeed;
+        vd[1] = minSpeed;
+    }
+    if((state.vel - maxAccel*dt > maxSpeed) && (state.vel + maxAccel*dt > maxSpeed)){
+        vd[0] = maxSpeed;
+        vd[1] = maxSpeed;
+    }
+    if((state.yawVel - maxYawVel_rate*dt < -maxYaw_rate) && (state.yawVel + maxYawVel_rate*dt < -maxYaw_rate)){
+        vd[2] = -maxYaw_rate;
+        vd[3] = -maxYaw_rate;
+    }
+    if((state.yawVel - maxYawVel_rate*dt > maxYaw_rate) && (state.yawVel + maxYawVel_rate*dt > maxYaw_rate)){
+        vd[2] = maxYaw_rate;
+        vd[3] = maxYaw_rate;
+    }
+
+    std::vector<double> dw{std::max(vs[0], vd[0]),
+                           std::min(vs[1], vd[1]),
+                           std::max(vs[2], vd[2]),
+                           std::min(vs[3], vd[3])};
 
     return dw;
 }
@@ -160,13 +177,16 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
     std::vector<motionState> trajectory; //[x, y, angle, v, w],....
     geometry_msgs::PoseStamped pose;
 
-
     double minCost = INFINITY;
-
     //search all trajectory in dynamic window
-    for(double v = dw[0]; v <= dw[1]; v += v_resolution){
-        for(double w = dw[2]; w <= dw[3]; w += w_resolution){
+    //set dw[]+resolution for at least one loop
+    for(double v = dw[0]; v <= dw[1] + v_resolution; v += v_resolution){
+        for(double w = dw[2]; w <= dw[3] + w_resolution; w += w_resolution){
             trajectory = predict_trajectory(v, w);
+
+            if(obstacleCost(trajectory) == INFINITY){
+                break;
+            }
 
             tmp_array[0] = v;
             tmp_array[1] = w;
@@ -176,9 +196,9 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
             goalAngle_costs.push_back(goalAngleCost(trajectory));
             goalDistance_costs.push_back(goalDistanceCost(trajectory));
             obstacle_costs.push_back(obstacleCost(trajectory));
+
         }
     }
-
     //cost normalize
     goalAngle_costs = normalize(goalAngle_costs);
     goalDistance_costs = normalize(goalDistance_costs);
@@ -186,21 +206,21 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
 
     //select largest cost trajectory
     for(int i=0; i<goalAngle_costs.size(); i++){
-        goalAngle_cost = angle_gain * goalAngle_costs[i];
-        goalDistance_cost = distance_gain * goalDistance_costs[i];
+        goalAngle_cost = angleCost_gain * goalAngle_costs[i];
+        goalDistance_cost = distanceCost_gain * goalDistance_costs[i];
         obstacle_cost = obstacleCost_gain * obstacle_costs[i];
 
         final_cost = goalAngle_cost + goalDistance_cost + obstacle_cost;
 
         if(final_cost < minCost){
+            nav_msgs::Path bestTrajectory_temp;
+
             minCost = final_cost;
 
             best_cmd_vel.linear.x = velocity_array[i][0];
             best_cmd_vel.angular.z = velocity_array[i][1];
 
             trajectory = predict_trajectory(velocity_array[i][0], velocity_array[i][1]);
-            bestTrajectory.header.frame_id = map_id;
-            bestTrajectory.header.stamp = ros::Time::now();
 
             for(const auto& pos : trajectory)
             {
@@ -211,18 +231,18 @@ void DWA::calc_controll_and_trajectory(std::vector<double> dw)
                 pose.pose.position.z = 0;
                 pose.pose.orientation = rpy_to_geometry_quat(0, 0, pos.yawAngle);
 
-                bestTrajectory.poses.push_back(pose);
+                bestTrajectory_temp.poses.push_back(pose);
             }
+            bestTrajectory_temp.header.frame_id = map_id;
+            bestTrajectory_temp.header.stamp = ros::Time::now();
+            bestTrajectory = bestTrajectory_temp;
 
             //if robot stuck, avoid stuck by big turn
             if(best_cmd_vel.linear.x < robot_stuck_value && state.vel < robot_stuck_value){
-                best_cmd_vel.angular.z = maxYawVel_rate;
+                //best_cmd_vel.angular.z = maxYawVel_rate/3;
             }
         }
     }
-
-
-
 }
 
 std::vector<DWA::motionState> DWA::predict_trajectory(double v, double w)
@@ -279,8 +299,8 @@ double DWA::obstacleCost(const std::vector<motionState> trajectory)
 
         if(cost > maxCost){
             maxCost = cost;
-            if(maxCost == 100){
-                break;
+            if(maxCost == 100 || maxCost == 99){
+                return INFINITY;
             }
         }
     }
@@ -299,10 +319,13 @@ double DWA::getCost(double x, double y)
     double x_grid = (x-costmap.info.origin.position.x)/costmap.info.resolution;
     double y_grid = (y-costmap.info.origin.position.y)/costmap.info.resolution;
 
-    double data_pos = (costmap.info.width/costmap.info.resolution)*y_grid + x_grid;
-    double cost = costmap.data[data_pos];
+    double data_pos = costmap.info.width*y_grid + x_grid;
 
-    return cost;
+    if(data_pos > 0 && data_pos < costmap.data.size()){
+        return costmap.data[data_pos];
+    }else{
+        return -INFINITY;
+    }
 }
 
 double DWA::arrangeAngle(double angle)
@@ -321,13 +344,28 @@ double DWA::arrangeAngle(double angle)
 
 template <class T> std::vector<T> DWA::normalize(std::vector<T>& num)
 {
+    if(num.empty()){
+        return num;
+    }
+
     T xmin = *std::min_element(std::begin(num), std::end(num));
     T xmax = *std::max_element(std::begin(num), std::end(num));
+
+    //0 division
+    if(xmin == xmax){
+        if(xmin == 0){
+            return num;
+        }else{
+            for(auto& n : num){
+                n = n/n; //1
+            }
+            return num;
+        }
+    }
 
     for(auto& n : num){
         n = (n - xmin) / (xmax - xmin);
     }
-
     return num;
 }
 

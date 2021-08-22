@@ -62,12 +62,6 @@
             <param name="local_costmap/robot_base_frame" value="base_link" />
         </node>
     </group>
-    <!-- costmap_only -->
-    <group unless="$(arg move_base)">
-        <node pkg="rumba_autocar" type="costmap_node" name="costmap_node" output="screen">
-            <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
-        </node>
-    </group>
 
 
 

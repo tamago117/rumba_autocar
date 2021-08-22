@@ -1,11 +1,24 @@
+/**
+* @file dwa_path_plan.cpp
+* @brief path planning by dynamic window approach
+* @author Michikuni Eguchi
+* @date 2021.8.19
+* @details local path planning by dynamic window approach using local cost map
+*/
+
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
+#include <geometry_msgs/Pose.h>
+#include <iostream>
 #include "rumba_autocar/dwa.h"
 #include "rumba_autocar/tf_position.h"
+
+bool is_path_topic = false;
+bool is_costmap_topic = false;
 
 std::string runMode = "stop";
 void mode_callback(const std_msgs::String& mode)
@@ -23,12 +36,16 @@ nav_msgs::Path path;
 void path_callback(const nav_msgs::Path& path_message)
 {
     path = path_message;
+
+    is_path_topic = true;
 }
 
 nav_msgs::OccupancyGrid costmap;
 void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 {
     costmap = costmap_message;
+
+    is_costmap_topic = true;
 }
 
 int main(int argc, char** argv)
@@ -47,7 +64,7 @@ int main(int argc, char** argv)
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     ros::Subscriber mode_sub = nh.subscribe("mode_select/mode", 10, mode_callback);
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
-    ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
+    ros::Subscriber path_sub = nh.subscribe("wayPoint/path", 50, path_callback);
     ros::Subscriber cost_sub = nh.subscribe("dwa_path_plan/costmap", 10, cost_callback);
 
     ros::Rate loop_rate(rate);
@@ -60,8 +77,10 @@ int main(int argc, char** argv)
 
     ctr::DWA dwa;
     ctr::DWA::motionState nowState;
+
     while(ros::ok())
     {
+        
         //updata now position and velocity information
         nowState.x = nowPosition.getPose().position.x;
         nowState.y = nowPosition.getPose().position.y;
@@ -72,18 +91,31 @@ int main(int argc, char** argv)
         preX = nowState.x;
         preAngle = nowState.yawAngle;
 
-        if(runMode == "start"){
+
+        if(is_path_topic && is_costmap_topic){
             //path planning by dynamic window approach
             dwa.dwa_controll(nowState, path.poses[targetWp].pose, costmap);
             dwa.get_result(cmd_vel, trajectory);
-        }else if(runMode == "stop"){
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0;
-        }
+            
+            if(cmd_vel.linear.x > 0 && cmd_vel.linear.x < 0.05){
+                cmd_vel.linear.x = 0.05;
+            }
+            if(cmd_vel.angular.z > 0 && cmd_vel.angular.z < 0.05){
+                cmd_vel.angular.z = 0.05;
+            }
+            if(cmd_vel.angular.z > 0 && cmd_vel.angular.z < -0.05){
+                cmd_vel.angular.z = -0.05;
+            }
 
-        //publish cmd_vel and trajectory
-        cmd_pub.publish(cmd_vel);
-        path_pub.publish(trajectory);
+            if(runMode == "stop"){
+                cmd_vel.linear.x = 0;
+                cmd_vel.angular.z = 0;
+            }
+
+            //publish cmd_vel and trajectory
+            cmd_pub.publish(cmd_vel);
+            path_pub.publish(trajectory);
+        }
 
         ros::spinOnce();
         loop_rate.sleep();
