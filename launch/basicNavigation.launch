@@ -2,7 +2,7 @@
 <launch>
     <arg name="config" default="$(find create_bringup)/config/default.yaml" />
     <arg name="nav_mode" default="slam"/>
-    <arg name="move_base" default="true"/>
+    <arg name="move_base" default="false"/>
     <arg name="mapFile" default = "$(find rumba_autocar)/resources/myRoom/map.yaml"/>
     <!-- Robot description -->
     <include file="$(find rumba_autocar)/launch/model_show.launch" >
@@ -31,25 +31,6 @@
             <param name="map_frame"  value="map" />
             <remap from="scan"  to="scan_filtered"/>
         </node>
-        <!-- move_base -->
-        <group if="$(arg move_base)">
-            <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-                <rosparam file="$(find rumba_autocar)/config/move_base/move_base_params.yaml" command="load" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/costmap_common_params.yaml" command="load" ns="global_costmap" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/costmap_common_params.yaml" command="load" ns="local_costmap" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
-
-                <param name="global_costmap/global_frame" value="map" />
-                <param name="global_costmap/robot_base_frame" value="base_link" />
-                <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
-                <param name="local_costmap/laser_scan_sensor/topic" value="scan_filter" />
-                <param name="local_costmap/global_frame" value="odom" />
-                <param name="local_costmap/robot_base_frame" value="base_link" />
-            </node>
-        </group>
-
     </group>
 
     <group if="$(eval nav_mode == 'slam')">
@@ -64,21 +45,22 @@
             <param name="global_frame_id" value="map" />
             <remap from="scan"  to="scan_filtered"/>
         </node>
-        <!-- move_base -->
-        <group if="$(arg move_base)">
-            <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-                <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
-                <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
+    </group>
 
-                <param name="global_costmap/global_frame" value="map" />
-                <param name="global_costmap/robot_base_frame" value="base_link" />
-                <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
-                <param name="local_costmap/laser_scan_sensor/topic" value="scan_filter" />
-                <param name="local_costmap/global_frame" value="odom" />
-                <param name="local_costmap/robot_base_frame" value="base_link" />
-            </node>
-        </group>
+    <!-- move_base -->
+    <group if="$(arg move_base)">
+        <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+            <rosparam file="$(find rumba_autocar)/config/move_base/local_costmap_params_old.yaml" command="load" />
+            <rosparam file="$(find rumba_autocar)/config/move_base/global_costmap_params_old.yaml" command="load" />
+            <rosparam file="$(find rumba_autocar)/config/move_base/base_local_planner_params.yaml" command="load" />
+
+            <param name="global_costmap/global_frame" value="map" />
+            <param name="global_costmap/robot_base_frame" value="base_link" />
+            <param name="local_costmap/laser_scan_sensor/sensor_frame" value="lidar_link" />
+            <param name="local_costmap/laser_scan_sensor/topic" value="scan_filter" />
+            <param name="local_costmap/global_frame" value="odom" />
+            <param name="local_costmap/robot_base_frame" value="base_link" />
+        </node>
     </group>
 
 

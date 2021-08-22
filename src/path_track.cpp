@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("roomba/cmd_vel", 10);
 
-    pp::PurePursuit pure_pursuit(max_angular_vel);
+    ctr::PurePursuit pure_pursuit(max_angular_vel);
     tf_position nowPosition(map_id, base_link_id, rate);
 
     ros::Rate loop_rate(rate);
@@ -64,7 +64,6 @@ int main(int argc, char** argv)
             cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), path.poses[targetWp] , cmd_vel.linear.x);
             cmd_pub.publish(cmd_vel);
         }
-        
 
         ros::spinOnce();
         loop_rate.sleep();

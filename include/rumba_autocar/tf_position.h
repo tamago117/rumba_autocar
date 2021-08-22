@@ -47,7 +47,7 @@ tf_position::tf_position(std::string base_id_, std::string child_id_, double rat
     {
         try
         {
-            tfStamp = tfBuffer.lookupTransform(base_id, child_id, ros::Time(0));
+            tfStamp = tfBuffer.lookupTransform(base_id, child_id, ros::Time(0), ros::Duration(0.1));
             poseStamp.header = tfStamp.header;
             poseStamp.pose.position.x = tfStamp.transform.translation.x;
             poseStamp.pose.position.y = tfStamp.transform.translation.y;

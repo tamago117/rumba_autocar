@@ -45,8 +45,9 @@ std::string nowDay()
 void callback(const std_msgs::Float32MultiArray& message)
 {
     static std::ofstream ofs(filePath.c_str());
-    for(const auto& data : message.data){
-        ofs << data << ",";
+    ofs << message.data[0];
+    for(int i=1; i<message.data.size(); ++i){
+        ofs << "," << message.data[i];
     }
     ofs << std::endl;
 
