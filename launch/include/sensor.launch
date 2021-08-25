@@ -55,13 +55,6 @@
         <node name="imu_to_pose" pkg="rumba_autocar" type="imu_to_pose">
             <remap from="imu"  to="/imu/data"/>
         </node>
-        <!--odometry-->
-        <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
-            <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
-            <remap from="/odometry/filtered" to="fusion/odom" />
-            <remap from="odom0" to="odom" />
-            <remap from="imu0"  to="/imu/data" />
-        </node>
     </group>
 
 </launch>

@@ -24,6 +24,12 @@ double poseStampDistance(const geometry_msgs::PoseStamped& pose1, const geometry
     return sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
 }
 
+int targetWp = 0;
+void targetWp_callback(const std_msgs::Int32& targetWp_num)
+{
+    targetWp = targetWp_num.data;
+}
+
 nav_msgs::Path path;
 void path_callback(const nav_msgs::Path path_message)
 {
@@ -56,10 +62,10 @@ int main(int argc, char** argv)
     bool trace_wp_mode = true;
     std_msgs::Int32 targetWp;
 
-    std_msgs::String mode_stop;
-    const std::string stop = "stop";
-    mode_stop.data = stop;
-    bool isStop = false;
+    std_msgs::String mode;
+    const std::string angleAdjust = "adjust";
+    mode.data = angleAdjust;
+    bool isReach = false;
     while(ros::ok())
     {
         if(path.poses.size()>0){
@@ -67,7 +73,7 @@ int main(int argc, char** argv)
                 //waypoint_pitchになるよう target way pointの更新
                 while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= wp_pitch))
                 {
-                    //終端
+                    //end point
                     if(targetWp.data >= (path.poses.size()-1)){
                         break;
                     }
@@ -77,14 +83,17 @@ int main(int argc, char** argv)
         }
 
         if(targetWp.data >= (path.poses.size()-1)){
-            if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= 0.2)
-                isStop = true;
+            //distance
+            if(!isReach){
+                if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= tar_deviation){
+                    isReach = true;
+                    mode_pub.publish(mode);
+                }
+            }
         }
 
+
         wp_pub.publish(targetWp);
-        if(isStop){
-            mode_pub.publish(mode_stop);
-        }
 
         ros::spinOnce();
         loop_rate.sleep();

@@ -9,7 +9,6 @@
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
-#include <std_msgs/Float32.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
@@ -20,12 +19,6 @@
 
 bool is_path_topic = false;
 bool is_costmap_topic = false;
-
-std::string runMode = "stop";
-void mode_callback(const std_msgs::String& mode)
-{
-    runMode = mode.data;
-}
 
 int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
@@ -67,16 +60,12 @@ int main(int argc, char** argv)
 
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("dwa_path_plan/trajectory", 10);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-    ros::Publisher vel_rviz_pub = nh.advertise<std_msgs::Float32>("dwa_path_plan/vel_rviz", 10);
-    ros::Publisher yawVel_rviz_pub = nh.advertise<std_msgs::Float32>("dwa_path_plan/yawVel_rviz", 10);
-    ros::Subscriber mode_sub = nh.subscribe("mode_select/mode", 10, mode_callback);
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("wayPoint/path", 50, path_callback);
     ros::Subscriber cost_sub = nh.subscribe("dwa_path_plan/costmap", 10, cost_callback);
 
     ros::Rate loop_rate(rate);
 
-    std_msgs::Float32 vel, yawVel;
     geometry_msgs::Twist cmd_vel;
     nav_msgs::Path trajectory;
     tf_position nowPosition(map_id, base_link_id, rate);
@@ -118,19 +107,9 @@ int main(int argc, char** argv)
                 cmd_vel.angular.z = -0.05;
             }
 
-            if(runMode == "stop"){
-                cmd_vel.linear.x = 0;
-                cmd_vel.angular.z = 0;
-            }
-
             //publish cmd_vel and trajectory
             cmd_pub.publish(cmd_vel);
             path_pub.publish(trajectory);
-
-            vel.data = cmd_vel.linear.x;
-            yawVel.data = cmd_vel.angular.z;
-            vel_rviz_pub.publish(vel);
-            yawVel_rviz_pub.publish(yawVel);
 
         }
 

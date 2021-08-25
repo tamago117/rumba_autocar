@@ -27,11 +27,11 @@ class DWA
 {
 public:
     struct motionState{
-        double x;
-        double y;
-        double yawAngle;
-        double vel;
-        double yawVel;
+        double x = 0;
+        double y = 0;
+        double yawAngle = 0;
+        double vel = 0;
+        double yawVel = 0;
     };
 
     DWA();
@@ -59,6 +59,7 @@ private:
     std::string map_id;
 
     motionState state;
+    motionState preState;
     geometry_msgs::Pose goal;
     nav_msgs::OccupancyGrid costmap;
 
@@ -136,6 +137,10 @@ void DWA::get_result(geometry_msgs::Twist& cmd_vel, nav_msgs::Path& resultTrajec
 std::vector<double> DWA::calc_dynamicWindow()
 {
     std::vector<double> vs{minSpeed, maxSpeed, -maxYaw_rate, maxYaw_rate};
+
+    if(sqrt(pow(state.x-preState.x, 2) + pow(state.y-preState.y, 2)) < maxSpeed*dt){
+        preState = state;
+    }
 
     std::vector<double> vd{state.vel - maxAccel*dt,
                            state.vel + maxAccel*dt,

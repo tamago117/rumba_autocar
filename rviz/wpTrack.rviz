@@ -6,7 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
+        - /String1
       Splitter Ratio: 0.5
     Tree Height: 282
   - Class: rviz/Selection
@@ -119,19 +121,77 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: true
+        base_link:
+          Value: false
+        camera_bottom_screw_frame:
+          Value: false
+        camera_link:
+          Value: false
+        front_wheel_link:
+          Value: false
+        gyro_link:
+          Value: false
+        left_cliff_sensor_link:
+          Value: false
+        left_wheel_link:
+          Value: false
+        leftfront_cliff_sensor_link:
+          Value: false
+        lidar_link:
+          Value: false
+        map:
+          Value: true
+        odom:
+          Value: true
+        right_cliff_sensor_link:
+          Value: false
+        right_wheel_link:
+          Value: false
+        rightfront_cliff_sensor_link:
+          Value: false
+        wall_sensor_link:
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        map:
+          odom:
+            base_footprint:
+              base_link:
+                camera_bottom_screw_frame:
+                  camera_link:
+                    {}
+                front_wheel_link:
+                  {}
+                gyro_link:
+                  {}
+                left_cliff_sensor_link:
+                  {}
+                left_wheel_link:
+                  {}
+                leftfront_cliff_sensor_link:
+                  {}
+                lidar_link:
+                  {}
+                right_cliff_sensor_link:
+                  {}
+                right_wheel_link:
+                  {}
+                rightfront_cliff_sensor_link:
+                  {}
+                wall_sensor_link:
+                  {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -308,6 +368,25 @@ Visualization Manager:
       size: 128
       text size: 14
       top: 10
+    - Align Bottom: false
+      Background Alpha: 0.800000011920929
+      Background Color: 0; 0; 0
+      Class: jsk_rviz_plugin/String
+      Enabled: true
+      Foreground Alpha: 0.800000011920929
+      Foreground Color: 255; 255; 255
+      Name: String
+      Overtake Color Properties: true
+      Overtake Position Properties: true
+      Topic: /mode
+      Value: true
+      font: DejaVu Sans Mono
+      height: 40
+      left: 10
+      line width: 2
+      text size: 24
+      top: 170
+      width: 150
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -336,25 +415,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.531948089599609
+      Distance: 8.818452835083008
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.9305291175842285
-        Y: 0.45632416009902954
-        Z: 0.9984919428825378
+        X: 1.8124110698699951
+        Y: 0.21858884394168854
+        Z: 0.9211815595626831
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9347973465919495
+      Pitch: 0.8597975373268127
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.970414638519287
+      Yaw: 3.025413990020752
     Saved: ~
 Window Geometry:
   Displays:
@@ -373,6 +452,6 @@ Window Geometry:
     collapsed: false
   Width: 1299
   X: 67
-  Y: 1
+  Y: 27
   modeSelect:
     collapsed: false

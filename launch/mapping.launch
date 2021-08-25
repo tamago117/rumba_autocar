@@ -6,6 +6,7 @@
     <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
         <arg name="nav_mode" default="mapping"/>
         <arg name="gazebo" value="$(arg simulation)"/>
+        <arg name="move_base" default="false"/>
     </include>
 
     <!--joystick-->
