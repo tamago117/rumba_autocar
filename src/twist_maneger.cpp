@@ -97,13 +97,28 @@ int main(int argc, char** argv)
     tf_position nowPosition(map_id, base_link_id, rate);
     mode.data = stop;
 
+    bool run_init = true;
+
     std_msgs::Float32 vel, yawVel;
     while(ros::ok())
     {
+        if(run_init){
+            if(mode.data == "run"){
+                double diffAngle = arrangeAngle(quat2yaw(path.poses[targetWp].pose.orientation) - nowPosition.getYaw());
+
+                cmd_vel.linear.x = 0;
+                cmd_vel.angular.z = constrain(diffAngle * 1.5, -maxYaw_rate, maxYaw_rate);
+                if(abs(diffAngle) < 1*M_PI/180){
+                    run_init = false;
+                }
+            }
+        }
+        
 
         if(mode.data == "stop"){
             cmd_vel.linear.x = 0;
             cmd_vel.angular.z = 0;
+            run_init = true;
         }
 
         if(mode.data == "adjust"){

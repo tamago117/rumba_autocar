@@ -4,12 +4,6 @@
     <arg name="way_file" default="turtlebot_world_way.csv"/>
     <arg name="simulation" default="true"/>
 
-    <!--joystick-->
-    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba">
-        <remap from="cmd_vel" to="ps4/cmd_vel"/>
-    </node>
-    <node name="joy_node" pkg="joy" type="joy_node"/>
-
     <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
         <arg name="nav_mode" default="slam"/>
         <arg name="move_base" default="false"/>
@@ -38,9 +32,11 @@
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="30"/>
         <param name="max_angular_vel" value="1.5"/>
+        <param name="minSpeed" value="0.35"/>
+        <param name="maxSpeed" value="0.7"/>
+        <param name="maxCurvature" value="2"/>
         <remap from="path" to="wayPoint/path"/>
-        <remap from="cmd_vel" to="ps4/cmd_vel"/>
-        <remap from="roomba/cmd_vel" to="dwa_path_plan/cmd_vel"/>
+        <remap from="roomba/cmd_vel" to="path_track/cmd_vel"/>
     </node>
     <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
             <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
@@ -59,7 +55,7 @@
         <param name="loop_rate" value="30"/>
         <param name="maxYaw_rate" value="2"/>
         <remap from="path" to="wayPoint/path"/>
-        <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
+        <remap from="cmd_vel" to="path_track/cmd_vel"/>
         <remap from="twist_maneger/cmd_vel" to="cmd_vel"/>
     </node>
 
