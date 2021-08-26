@@ -32,8 +32,8 @@ odom_model_type: diff
 odom_alpha1: 0.2 #オドメトリの直進成分がオドメトリの直進成分に与える誤差
 odom_alpha2: 0.2 #オドメトリの直進成分がオドメトリの回転成分に与える誤差
 odom_alpha3: 0.2 #オドメトリの回転成分がオドメトリの直進成分に与える誤差
-odom_alpha4: 4 #オドメトリの回転成分がオドメトリの回転成分に与える誤差
+odom_alpha4: 0.2 #オドメトリの回転成分がオドメトリの回転成分に与える誤差
 odom_alpha5: 0.2 #Translation-related noise parameter (only used if model is "omni").
-#odom_frame_id: odom
-#base_frame_id: base_footprint
-#global_frame_id: map
+odom_frame_id: odom
+base_frame_id: base_footprint
+global_frame_id: map

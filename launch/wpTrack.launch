@@ -1,47 +1,62 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="filePath" value="$(find rumba_autocar)/csv/way2.csv"/>
+    <arg name="way_file" default="turtlebot_world_way.csv"/>
+    <arg name="simulation" default="true"/>
 
-    <!--joystick-->
-    <!--<node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
-    <node name="joy_node" pkg="joy" type="joy_node"/>-->
-
-    <include file="$(find rumba_autocar)/launch/basicNavigation.launch">
+    <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
         <arg name="nav_mode" default="slam"/>
         <arg name="move_base" default="false"/>
+        <arg name="gazebo" value="$(arg simulation)"/>
+        <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+        <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
     </include>
 
     <node name="wpLoad" pkg="rumba_autocar" type="wpLoad">
-        <param name="filePath" value="$(arg filePath)"/>
+        <param name="filePath" value="$(find rumba_autocar)/csv/$(arg way_file)"/>
         <param name="map_frame_id" value="map"/>
     </node>
     <node name="wpVisualizer" pkg="rumba_autocar" type="wpVisualizer">
         <remap from="path" to="wayPoint/path"/>
     </node>
     <node name="wpControl" pkg="rumba_autocar" type="wpControl">
-        <param name="base_link_frame_id" value="base_link"/>
+        <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
-        <param name="waypoint_pitch" value="0.3"/>
+        <param name="waypoint_pitch" value="0.5"/>
         <param name="loop_rate" value="100"/>
+        <param name="target_deviation" value = "0.1"/>
         <remap from="path" to="wayPoint/path"/>
     </node>
-    <!--<node name="path_track" pkg="rumba_autocar" type="path_track" output="screen">
-        <param name="base_link_frame_id" value="base_link"/>
+    <node name="path_track" pkg="rumba_autocar" type="path_track" output="screen">
+        <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
-        <param name="loop_rate" value="100"/>
+        <param name="loop_rate" value="30"/>
         <param name="max_angular_vel" value="1.5"/>
+        <param name="minSpeed" value="0.35"/>
+        <param name="maxSpeed" value="0.7"/>
+        <param name="maxCurvature" value="2"/>
         <remap from="path" to="wayPoint/path"/>
-    </node>-->
+        <remap from="roomba/cmd_vel" to="path_track/cmd_vel"/>
+    </node>
     <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
             <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
             <remap from="costmap_node/my_costmap/costmap" to="dwa_path_plan/costmap"/>
         </node>
     
-    <node name="dwa_path_plan" pkg="rumba_autocar" type="dwa_path_plan" output="screen">
+    <!--<node name="dwa_path_plan" pkg="rumba_autocar" type="dwa_path_plan">
         <rosparam file="$(find rumba_autocar)/config/dwa.yaml" command="load" />
         <remap from="path" to="wayPoint/path"/>
-        <remap from="cmd_vel" to="roomba/cmd_vel"/>
+        <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
+    </node>-->
+
+    <node name="twist_maneger" pkg="rumba_autocar" type="twist_maneger">
+        <param name="base_link_frame_id" value="base_footprint"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="30"/>
+        <param name="maxYaw_rate" value="2"/>
+        <remap from="path" to="wayPoint/path"/>
+        <remap from="cmd_vel" to="path_track/cmd_vel"/>
+        <remap from="twist_maneger/cmd_vel" to="cmd_vel"/>
     </node>
 
     <!--rviz-->

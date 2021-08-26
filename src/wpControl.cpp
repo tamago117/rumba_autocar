@@ -7,6 +7,7 @@
 */
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <iostream>
@@ -21,6 +22,12 @@ double poseStampDistance(const geometry_msgs::PoseStamped& pose1, const geometry
     double diffZ = pose1.pose.position.z - pose2.pose.position.z;
 
     return sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
+}
+
+int targetWp = 0;
+void targetWp_callback(const std_msgs::Int32& targetWp_num)
+{
+    targetWp = targetWp_num.data;
 }
 
 nav_msgs::Path path;
@@ -48,11 +55,17 @@ int main(int argc, char** argv)
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher wp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
+    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode_select/mode", 10);
 
     ros::Rate loop_rate(rate);
 
     bool trace_wp_mode = true;
     std_msgs::Int32 targetWp;
+
+    std_msgs::String mode;
+    const std::string angleAdjust = "adjust";
+    mode.data = angleAdjust;
+    bool isReach = false;
     while(ros::ok())
     {
         if(path.poses.size()>0){
@@ -60,14 +73,25 @@ int main(int argc, char** argv)
                 //waypoint_pitchになるよう target way pointの更新
                 while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= wp_pitch))
                 {
-                    //終端
-                    if(targetWp.data > (path.poses.size()-1)){
+                    //end point
+                    if(targetWp.data >= (path.poses.size()-1)){
                         break;
                     }
                     targetWp.data++;
                 }
             }
         }
+
+        if(targetWp.data >= (path.poses.size()-1)){
+            //distance
+            if(!isReach){
+                if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= tar_deviation){
+                    isReach = true;
+                    mode_pub.publish(mode);
+                }
+            }
+        }
+
 
         wp_pub.publish(targetWp);
 

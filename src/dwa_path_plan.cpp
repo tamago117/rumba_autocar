@@ -20,12 +20,6 @@
 bool is_path_topic = false;
 bool is_costmap_topic = false;
 
-std::string runMode = "stop";
-void mode_callback(const std_msgs::String& mode)
-{
-    runMode = mode.data;
-}
-
 int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
 {
@@ -54,6 +48,10 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
 
+    double maxSpeed, maxYaw_rate;
+    pnh.param<double>("maxSpeed", maxSpeed, 2.0);
+    pnh.param<double>("maxYaw_rate", maxYaw_rate, 40);
+    maxYaw_rate *= M_PI/180;
     std::string map_id, base_link_id;
     pnh.param<std::string>("map_frame_id", map_id, "map");
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
@@ -62,7 +60,6 @@ int main(int argc, char** argv)
 
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("dwa_path_plan/trajectory", 10);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-    ros::Subscriber mode_sub = nh.subscribe("mode_select/mode", 10, mode_callback);
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("wayPoint/path", 50, path_callback);
     ros::Subscriber cost_sub = nh.subscribe("dwa_path_plan/costmap", 10, cost_callback);
@@ -72,7 +69,9 @@ int main(int argc, char** argv)
     geometry_msgs::Twist cmd_vel;
     nav_msgs::Path trajectory;
     tf_position nowPosition(map_id, base_link_id, rate);
+
     double preX = 0;
+    double preY = 0;
     double preAngle = 0;
 
     ctr::DWA dwa;
@@ -85,10 +84,11 @@ int main(int argc, char** argv)
         nowState.x = nowPosition.getPose().position.x;
         nowState.y = nowPosition.getPose().position.y;
         nowState.yawAngle = nowPosition.getYaw();
-        nowState.vel = (nowState.x - preX)/(1/rate);
+        nowState.vel = (sqrt(pow(nowState.x - preX, 2) + pow(nowState.y - preY, 2)))/(1/rate);
         nowState.yawVel = (nowState.yawAngle - preAngle)/(1/rate);
 
         preX = nowState.x;
+        preY = nowState.y;
         preAngle = nowState.yawAngle;
 
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
             //path planning by dynamic window approach
             dwa.dwa_controll(nowState, path.poses[targetWp].pose, costmap);
             dwa.get_result(cmd_vel, trajectory);
-            
+
             if(cmd_vel.linear.x > 0 && cmd_vel.linear.x < 0.05){
                 cmd_vel.linear.x = 0.05;
             }
@@ -107,14 +107,10 @@ int main(int argc, char** argv)
                 cmd_vel.angular.z = -0.05;
             }
 
-            if(runMode == "stop"){
-                cmd_vel.linear.x = 0;
-                cmd_vel.angular.z = 0;
-            }
-
             //publish cmd_vel and trajectory
             cmd_pub.publish(cmd_vel);
             path_pub.publish(trajectory);
+
         }
 
         ros::spinOnce();

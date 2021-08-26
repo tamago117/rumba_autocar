@@ -3,14 +3,14 @@ my_costmap:
     - {name: obstacle_layer, type: 'costmap_2d::ObstacleLayer'}
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
   global_frame: map
-  robot_base_frame: base_link
+  robot_base_frame: base_footprint
   footprint: [[-0.1, 0], [-0.07, 0.07], [0, 0.1], [0.07, 0.07], [0.1, 0], [0.07, -0.07], [0, -0.1], [-0.07, -0.07]]
   rolling_window: true
   width: 4.0
   height: 4.0
   resolution: 0.05
-  update_frequency: 30.0
-  publish_frequency: 30.0
+  update_frequency: 10.0
+  publish_frequency: 10.0
 
   obstacle_layer:
     observation_sources: laser_scan_sensor
@@ -21,4 +21,4 @@ my_costmap:
       marking: true
       clearing: true
   inflation_layer:
-    inflation_radius: 0.22
+    inflation_radius: 0.3

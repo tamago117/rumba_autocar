@@ -258,4 +258,9 @@ target_link_libraries(wpVisualizer
   ${catkin_LIBRARIES}
 )
 
+add_executable(twist_maneger   src/twist_maneger.cpp)
+target_link_libraries(twist_maneger
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)

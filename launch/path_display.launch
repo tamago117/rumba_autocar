@@ -1,12 +1,16 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="filePath" value="$(find rumba_autocar)/csv/way2.csv"/>
+    <arg name="fileName" default="turtlebot_world_way.csv"/>
+    <arg name="mapFile" default = "$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
 
     <node name="wpLoad" pkg="rumba_autocar" type="wpLoad" output="screen">
-        <param name="filePath" value="$(arg filePath)"/>
+        <param name="filePath" value="$(find rumba_autocar)/csv/$(arg fileName)"/>
         <param name="map_frame_id" value="map"/>
         <remap from="wayPoint/path" to="path"/>
+    </node>
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg mapFile)">
+        <param name="frame_id" value="map"/>
     </node>
     <node name="wpVisualizer" pkg="rumba_autocar" type="wpVisualizer"/>
 
