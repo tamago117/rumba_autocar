@@ -325,10 +325,10 @@ double DWA::speedCost(const std::vector<motionState> trajectory)
 double DWA::getCost(double x, double y)
 {
     //x = costmap.info.origin.position.x + x_grid*costmap.info.resolution
-    double x_grid = (x-costmap.info.origin.position.x)/costmap.info.resolution;
-    double y_grid = (y-costmap.info.origin.position.y)/costmap.info.resolution;
+    int x_grid = (x-costmap.info.origin.position.x)/costmap.info.resolution;
+    int y_grid = (y-costmap.info.origin.position.y)/costmap.info.resolution;
 
-    double data_pos = costmap.info.width*y_grid + x_grid;
+    int data_pos = costmap.info.width*(y_grid-1) + x_grid;
 
     if(data_pos > 0 && data_pos < costmap.data.size()){
         return costmap.data[data_pos];

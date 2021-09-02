@@ -1,9 +1,9 @@
 /**
-* @file path_track.cpp
-* @brief tracking target way point
+* @file lattice_planner_trace.cpp
+* @brief tracking  path which generated state lattice planner
 * @author Michikuni Eguchi
 * @date 2021.7.29
-* @details 受け取ったtarget way point に追従するようにcmd_velをpublishする
+* @details 受け取ったtarget way point に追従するようにpure pursuit
 */
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
@@ -12,6 +12,7 @@
 #include <geometry_msgs/Pose.h>
 #include <rumba_autocar/PurePursuit.h>
 #include <rumba_autocar/tf_position.h>
+#include <math.h>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -20,6 +21,12 @@ int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
 {
     targetWp = targetWp_num.data;
+}
+
+nav_msgs::Path latticePlanPath;
+void latticePlanPath_callback(const nav_msgs::Path& latticePlanPath_message)
+{
+    latticePlanPath = latticePlanPath_message;
 }
 
 nav_msgs::Path path;
@@ -115,9 +122,21 @@ template <class T> T clip(const T& n, double lower, double upper)
   return numbers;
 }
 
+template<class T> T constrain(T num, T minVal, T maxVal)
+{
+    if(num > maxVal){
+        num = maxVal;
+    }
+    if(num < minVal){
+        num = minVal;
+    }
+
+    return num;
+}
+
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "path_track");
+    ros::init(argc, argv, "lattice_planner_trace");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
 
@@ -125,7 +144,7 @@ int main(int argc, char** argv)
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
     pnh.param<std::string>("map_frame_id", map_id, "map");
     double rate;
-    pnh.param<double>("loop_rate", rate, 100);
+    pnh.param<double>("loop_rate", rate, 30);
     double max_angular_vel;
     pnh.param<double>("max_angular_vel", max_angular_vel, 1);
     double minSpeed, maxSpeed;
@@ -136,7 +155,8 @@ int main(int argc, char** argv)
 
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
-    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("roomba/cmd_vel", 10);
+    ros::Subscriber latticePlanPath_sub = nh.subscribe("state_lattice_planner/path", 50, latticePlanPath_callback);
+    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("lattice_planner_trace/cmd_vel", 10);
 
     ctr::PurePursuit pure_pursuit(max_angular_vel);
     tf_position nowPosition(map_id, base_link_id, rate);
@@ -147,7 +167,7 @@ int main(int argc, char** argv)
     geometry_msgs::Twist cmd_vel;
     while(ros::ok())
     {
-        if(path.poses.size()>0){
+        if(path.poses.size()>0 && latticePlanPath.poses.size()>0){
 
 
             curvatures = calc_curvature(path);
@@ -155,10 +175,13 @@ int main(int argc, char** argv)
             // ->0 ~ 1
             curvatures = normalize(curvatures);
 
-            //change linear velocity according to curvature
-            cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
+            //change velocity according to curvature (asteroid)
+            cmd_vel.linear.x = abs(maxSpeed * pow(sin(acos(std::cbrt(curvatures[targetWp]))), 3));
+            //change velocity according to curvature (linear)
+            //cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
+            cmd_vel.linear.x = constrain(cmd_vel.linear.x, minSpeed, maxSpeed);
 
-            cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), path.poses[targetWp] , cmd_vel.linear.x);
+            cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), latticePlanPath.poses.back() , cmd_vel.linear.x);
             cmd_pub.publish(cmd_vel);
         }
 

@@ -1,0 +1,8 @@
+state_lattice_planner:
+    map_frame_id : map
+    lane_width : 1.2
+    vehicle_width : 0.3
+    sampling_number : 9
+    distanceCost_gain : 1.0
+    obstacleCost_gain : 2
+    loop_rate : 20
