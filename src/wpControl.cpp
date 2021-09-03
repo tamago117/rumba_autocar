@@ -45,22 +45,27 @@ int main(int argc, char** argv)
     std::string map_id, base_link_id;
     pnh.param<std::string>("map_frame_id", map_id, "map");
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
-    double wp_pitch, tar_deviation;
+    double target_pitch, wp_pitch, tar_deviation;
+    pnh.param<double>("target_pitch", target_pitch, 1.0);
     pnh.param<double>("waypoint_pitch", wp_pitch, 0.1);
     pnh.param<double>("target_deviation", tar_deviation, 0.05);
     double rate;
     pnh.param<double>("loop_rate", rate, 100);
+    double maxSpeed;
+    pnh.param<double>("max_speed", maxSpeed, 1.0);
 
     tf_position nowPosition(map_id, base_link_id, rate);
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
-    ros::Publisher wp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
+    ros::Publisher tarWp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
+    ros::Publisher nowWp_pub = nh.advertise<std_msgs::Int32>("nowWp", 10);
     ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode_select/mode", 10);
 
     ros::Rate loop_rate(rate);
 
     bool trace_wp_mode = true;
     std_msgs::Int32 targetWp;
+    std_msgs::Int32 nowWp;
 
     std_msgs::String mode;
     const std::string angleAdjust = "adjust";
@@ -70,8 +75,8 @@ int main(int argc, char** argv)
     {
         if(path.poses.size()>0){
             if(trace_wp_mode){
-                //waypoint_pitchになるよう target way pointの更新
-                while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= wp_pitch))
+                //target_pitchになるよう target way pointの更新
+                while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= target_pitch))
                 {
                     //end point
                     if(targetWp.data >= (path.poses.size()-1)){
@@ -92,8 +97,11 @@ int main(int argc, char** argv)
             }
         }
 
+        double dt = 0.2;
+        nowWp.data = targetWp.data - (target_pitch + maxSpeed*dt)/wp_pitch;
 
-        wp_pub.publish(targetWp);
+        tarWp_pub.publish(targetWp);
+        nowWp_pub.publish(nowWp);
 
         ros::spinOnce();
         loop_rate.sleep();

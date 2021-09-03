@@ -2,7 +2,7 @@
 * @file lattice_planner_trace.cpp
 * @brief tracking  path which generated state lattice planner
 * @author Michikuni Eguchi
-* @date 2021.7.29
+* @date 2021.9.1
 * @details 受け取ったtarget way point に追従するようにpure pursuit
 */
 #include <ros/ros.h>
@@ -21,6 +21,12 @@ int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
 {
     targetWp = targetWp_num.data;
+}
+
+int nowWp = 0;
+void nowWp_callback(const std_msgs::Int32& nowWp_num)
+{
+    nowWp = nowWp_num.data;
 }
 
 nav_msgs::Path latticePlanPath;
@@ -122,7 +128,7 @@ template <class T> T clip(const T& n, double lower, double upper)
   return numbers;
 }
 
-template<class T> T constrain(T num, T minVal, T maxVal)
+template<class T> T constrain(T num, double minVal, double maxVal)
 {
     if(num > maxVal){
         num = maxVal;
@@ -154,6 +160,7 @@ int main(int argc, char** argv)
     pnh.param<double>("maxCurvature", maxCurvature, 3);
 
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
+    ros::Subscriber nowWp_sub = nh.subscribe("nowWp", 50, nowWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Subscriber latticePlanPath_sub = nh.subscribe("state_lattice_planner/path", 50, latticePlanPath_callback);
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("lattice_planner_trace/cmd_vel", 10);
@@ -176,7 +183,8 @@ int main(int argc, char** argv)
             curvatures = normalize(curvatures);
 
             //change velocity according to curvature (asteroid)
-            cmd_vel.linear.x = abs(maxSpeed * pow(sin(acos(std::cbrt(curvatures[targetWp]))), 3));
+            nowWp = constrain(nowWp, 0.0, path.poses.size());
+            cmd_vel.linear.x = abs(maxSpeed * pow(sin(acos(std::cbrt(curvatures[nowWp]))), 3));
             //change velocity according to curvature (linear)
             //cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
             cmd_vel.linear.x = constrain(cmd_vel.linear.x, minSpeed, maxSpeed);

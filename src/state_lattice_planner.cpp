@@ -109,6 +109,18 @@ template <class T> std::vector<T> normalize(std::vector<T>& num, T amin, T amax)
     return num;
 }
 
+template<class T> T constrain(T num, double minVal, double maxVal)
+{
+    if(num > maxVal){
+        num = maxVal;
+    }
+    if(num < minVal){
+        num = minVal;
+    }
+
+    return num;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "state_lattice_planner");
@@ -136,13 +148,26 @@ int main(int argc, char** argv)
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("state_lattice_planner/marker_array", 10);
 
     ros::Rate loop_rate(rate);
+
+    const int repeatNum = 3;
     while(ros::ok())
     {
         if(path.poses.size() > 0){
-            double lane_center_x = path.poses[targetWp].pose.position.x;
+            std::vector<double> lane_center_x;
+            std::vector<double> lane_center_y;
+            std::vector<double> lane_heading;
+            //calculate cost using 3 way points
+            for(int i=-1; i<repeatNum-1; i++){
+                int index = constrain(targetWp+i, 0, path.poses.size());
+
+                lane_center_x.push_back(path.poses[index].pose.position.x);
+                lane_center_y.push_back(path.poses[index].pose.position.y);
+                lane_heading.push_back(arrangeAngle(quat2yaw(path.poses[index].pose.orientation)));
+            }
+            /*double lane_center_x = path.poses[targetWp].pose.position.x;
             double lane_center_y = path.poses[targetWp].pose.position.y;
             double lane_heading = quat2yaw(path.poses[targetWp].pose.orientation);
-            lane_heading = arrangeAngle(lane_heading);
+            lane_heading = arrangeAngle(lane_heading);*/
 
             //set target point and calculate each costs
             std::vector<std::vector<double>> targetPoint;
@@ -150,23 +175,32 @@ int main(int argc, char** argv)
             std::vector<double> costs;
 
             for(int i=0; i<sampling_num; i++){
-                //set target point
-                double delta = (l_width - v_width)*i/(sampling_num-1) - 0.5*(l_width -v_width);
-                double xf = lane_center_x - delta*sin(lane_heading);
-                double yf = lane_center_y + delta*cos(lane_heading);
-                std::vector<double> temp{xf, yf, lane_heading};
+                //calculate cost using 3 way points
+                double distance = 0;
+                double cost = 0;
+                for(int j=0; j<repeatNum; j++){
+                    //set target point
+                    double delta = (l_width - v_width)*i/(sampling_num-1) - 0.5*(l_width -v_width);
+                    double xf = lane_center_x[j] - delta*sin(lane_heading[j]);
+                    double yf = lane_center_y[j] + delta*cos(lane_heading[j]);
+                    std::vector<double> temp{xf, yf, lane_heading[j]};
 
-                targetPoint.push_back(temp);
+                    //set array target way point
+                    if(j==1){
+                        targetPoint.push_back(temp);
+                    }
 
-                //calculate cost
-                double distance = sqrt(pow(xf - lane_center_x, 2)+pow(yf - lane_center_y, 2));
-                double cost = getCost(xf, yf);
+                    //calculate cost
+                    distance += sqrt(pow(xf - lane_center_x[j], 2)+pow(yf - lane_center_y[j], 2));
+                    cost += getCost(xf, yf);
+                }
+                
                 distances.push_back(distance);
                 costs.push_back(cost);
             }
 
-            //-> 0~100
-            distances = normalize(distances, 0.0, 100.0);
+            //-> 0~100*3
+            distances = normalize(distances, 0.0, 100.0*repeatNum);
 
             //select best path
             double minCost = INFINITY;
@@ -196,8 +230,8 @@ int main(int argc, char** argv)
                 linear_start.y = targetPoint[i][1];
                 linear_start.z = 0.1;
                 geometry_msgs::Point linear_end;
-                linear_end.x = 0.2 * cos(lane_heading) + targetPoint[i][0];
-                linear_end.y = 0.2 * sin(lane_heading) + targetPoint[i][1];
+                linear_end.x = 0.2 * cos(lane_heading[1]) + targetPoint[i][0];
+                linear_end.y = 0.2 * sin(lane_heading[1]) + targetPoint[i][1];
                 linear_end.z = 0.1;
 
 

@@ -21,4 +21,5 @@ my_costmap:
       marking: true
       clearing: true
   inflation_layer:
-    inflation_radius: 0.4
+    inflation_radius: 0.45
+    

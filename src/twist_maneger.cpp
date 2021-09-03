@@ -102,42 +102,44 @@ int main(int argc, char** argv)
     std_msgs::Float32 vel, yawVel;
     while(ros::ok())
     {
-        if(run_init){
-            if(mode.data == "run"){
+        if(path.poses.size()>0){
+            if(run_init){
+                if(mode.data == "run"){
+                    double diffAngle = arrangeAngle(quat2yaw(path.poses[targetWp].pose.orientation) - nowPosition.getYaw());
+
+                    cmd_vel.linear.x = 0;
+                    cmd_vel.angular.z = constrain(diffAngle * 1.5, -maxYaw_rate, maxYaw_rate);
+                    if(abs(diffAngle) < 1*M_PI/180){
+                        run_init = false;
+                    }
+                }
+            }
+
+            if(mode.data == "stop"){
+                cmd_vel.linear.x = 0;
+                cmd_vel.angular.z = 0;
+                run_init = true;
+            }
+
+            if(mode.data == "adjust"){
                 double diffAngle = arrangeAngle(quat2yaw(path.poses[targetWp].pose.orientation) - nowPosition.getYaw());
 
                 cmd_vel.linear.x = 0;
                 cmd_vel.angular.z = constrain(diffAngle * 1.5, -maxYaw_rate, maxYaw_rate);
                 if(abs(diffAngle) < 1*M_PI/180){
-                    run_init = false;
+                    mode.data = "stop";
                 }
             }
+
+            cmd_vel_pub.publish(cmd_vel);
+            mode_pub.publish(mode);
+
+            vel.data = cmd_vel.linear.x;
+            yawVel.data = cmd_vel.angular.z;
+            vel_rviz_pub.publish(vel);
+            yawVel_rviz_pub.publish(yawVel);
         }
         
-
-        if(mode.data == "stop"){
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0;
-            run_init = true;
-        }
-
-        if(mode.data == "adjust"){
-            double diffAngle = arrangeAngle(quat2yaw(path.poses[targetWp].pose.orientation) - nowPosition.getYaw());
-
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = constrain(diffAngle * 1.5, -maxYaw_rate, maxYaw_rate);
-            if(abs(diffAngle) < 1*M_PI/180){
-                mode.data = "stop";
-            }
-        }
-
-        cmd_vel_pub.publish(cmd_vel);
-        mode_pub.publish(mode);
-
-        vel.data = cmd_vel.linear.x;
-        yawVel.data = cmd_vel.angular.z;
-        vel_rviz_pub.publish(vel);
-        yawVel_rviz_pub.publish(yawVel);
 
         ros::spinOnce();
         loop_rate.sleep();
