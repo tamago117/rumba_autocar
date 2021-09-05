@@ -1,9 +1,9 @@
 /**
-* @file path_track.cpp
+* @file pureWpTrace.cpp
 * @brief tracking target way point
 * @author Michikuni Eguchi
 * @date 2021.7.29
-* @details 受け取ったtarget way point に追従するようにcmd_velをpublishする
+* @details 受け取ったtarget way point に追従するようにpure pursuit
 */
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
@@ -117,7 +117,7 @@ template <class T> T clip(const T& n, double lower, double upper)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "path_track");
+    ros::init(argc, argv, "pureWpTrace");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
     pnh.param<std::string>("map_frame_id", map_id, "map");
     double rate;
-    pnh.param<double>("loop_rate", rate, 100);
+    pnh.param<double>("loop_rate", rate, 30);
     double max_angular_vel;
     pnh.param<double>("max_angular_vel", max_angular_vel, 1);
     double minSpeed, maxSpeed;
@@ -155,8 +155,10 @@ int main(int argc, char** argv)
             // ->0 ~ 1
             curvatures = normalize(curvatures);
 
-            //change linear velocity according to curvature
-            cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
+            //change velocity according to curvature (asteroid)
+            cmd_vel.linear.x = maxSpeed * pow(sin(acos(pow(curvatures[targetWp], 1/3))), 3);
+            //change velocity according to curvature (linear)
+            //cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
 
             cmd_vel.angular.z = pure_pursuit.getYawVel(nowPosition.getPoseStamped(), path.poses[targetWp] , cmd_vel.linear.x);
             cmd_pub.publish(cmd_vel);

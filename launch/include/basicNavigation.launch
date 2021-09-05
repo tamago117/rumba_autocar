@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="config" default="$(find create_bringup)/config/default.yaml" />
     <arg name="nav_mode" default="slam"/>
     <arg name="gazebo" default="false"/>
     <arg name="world" default="turtlebot3_world.world"/>
@@ -41,12 +40,12 @@
     </group>
 
     <!--odometry-->
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
+    <!--<node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
         <rosparam command="load" file="$(find rumba_autocar)/config/ekf_localization/model1.yaml" />
         <remap from="/odometry/filtered" to="fusion/odom" />
         <remap from="odom0" to="odom" />
         <remap from="imu0"  to="/imu/data" />
-    </node>
+    </node>-->
 
     <group if="$(eval nav_mode == 'mapping')">
         <!--mapping-->

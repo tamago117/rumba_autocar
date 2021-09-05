@@ -1,13 +1,15 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="way_file" default="turtlebot_world_way.csv"/>
+    <arg name="way_file" default="turtlebot_world_way2.csv"/>
+    <!--<arg name="way_file" default="house_way.csv"/>-->
     <arg name="simulation" default="true"/>
 
     <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
         <arg name="nav_mode" default="slam"/>
         <arg name="move_base" default="false"/>
         <arg name="gazebo" value="$(arg simulation)"/>
+        <!--<arg name="world" value="turtlebot3_house.world"/>-->
         <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
         <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
     </include>
@@ -22,12 +24,73 @@
     <node name="wpControl" pkg="rumba_autocar" type="wpControl">
         <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
-        <param name="waypoint_pitch" value="0.5"/>
+        <param name="target_pitch" value="0.7"/>
+        <param name="waypoint_pitch" value="0.15"/>
+        <param name="maxSpeed" value="0.7"/>
         <param name="loop_rate" value="100"/>
         <param name="target_deviation" value = "0.1"/>
         <remap from="path" to="wayPoint/path"/>
     </node>
-    <node name="path_track" pkg="rumba_autocar" type="path_track" output="screen">
+
+
+    <node name="state_lattice_planner" pkg="rumba_autocar" type="state_lattice_planner">
+        <rosparam file="$(find rumba_autocar)/config/state_lattice_planner.yaml" command="load" />
+        <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
+    </node>
+    <node name="lattice_planner_trace" pkg="rumba_autocar" type="lattice_planner_trace" >
+        <param name="base_link_frame_id" value="base_footprint"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="50"/>
+        <param name="max_angular_vel" value="2.0"/>
+        <param name="minSpeed" value="0.4"/>
+        <param name="maxSpeed" value="0.7"/>
+        <param name="maxCurvature" value="3"/>
+        <remap from="path" to="wayPoint/path"/>
+    </node>
+    <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
+        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
+        <remap from="costmap_node/my_costmap/costmap" to="state_lattice_planner/costmap"/>
+    </node>
+
+    <!--safety function-->
+    <node pkg="rumba_autocar" name="laser2pc" type="laser2pc.py">
+        <remap from="scan" to="scan_filtered"/>
+    </node>
+    <node pkg="rumba_autocar" name="safety_limit" type="safety_limit" output="screen">
+        <param name="max_nn" value="100"/>
+        <param name="robot_radius" value="0.2"/>
+        <param name="x_max" value="3.0"/>
+        <param name="x_min" value="-1.0"/>
+        <param name="y_max" value="0.3"/>
+        <param name="y_min" value="-0.3"/>
+        <param name="loop_rate" value="50"/>
+        <param name="dt" value="0.15"/>
+        <param name="recovery_start_time" value="0.5"/>
+
+        <remap from="safety_limit/cmd_vel_in" to="lattice_planner_trace/cmd_vel"/>
+        <remap from="cloud" to="laser2pc/pc2"/>
+     </node>
+     <node pkg="rumba_autocar" name="simple_recovery" type="simple_recovery">
+        <param name="linear_vel" value="-0.3"/>
+        <param name="angular_vel" value="0"/>
+        <param name="duration" value="1.5"/>
+
+     </node>
+
+    <node name="twist_maneger" pkg="rumba_autocar" type="twist_maneger">
+        <param name="base_link_frame_id" value="base_footprint"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="50"/>
+        <param name="maxYaw_rate" value="2"/>
+        <remap from="path" to="wayPoint/path"/>
+        <remap from="cmd_vel" to="safety_limit/cmd_vel_out"/>
+        <remap from="twist_maneger/cmd_vel" to="cmd_vel"/>
+        <remap from="recovery/mode" to="simple_recovery/mode"/>
+        <remap from="recovery/cmd_vel" to="simple_recovery/cmd_vel"/>
+    </node>
+
+
+    <!--<node name="pureWpTrace" pkg="rumba_autocar" type="pureWpTrace">
         <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="30"/>
@@ -36,28 +99,21 @@
         <param name="maxSpeed" value="0.7"/>
         <param name="maxCurvature" value="2"/>
         <remap from="path" to="wayPoint/path"/>
-        <remap from="roomba/cmd_vel" to="path_track/cmd_vel"/>
+        <remap from="roomba/cmd_vel" to="pureWpTrace/cmd_vel"/>
     </node>
     <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
-            <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
-            <remap from="costmap_node/my_costmap/costmap" to="dwa_path_plan/costmap"/>
-        </node>
-    
-    <!--<node name="dwa_path_plan" pkg="rumba_autocar" type="dwa_path_plan">
-        <rosparam file="$(find rumba_autocar)/config/dwa.yaml" command="load" />
-        <remap from="path" to="wayPoint/path"/>
-        <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
-    </node>-->
-
+        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
+        <remap from="costmap_node/my_costmap/costmap" to="state_lattice_planner/costmap"/>
+    </node>
     <node name="twist_maneger" pkg="rumba_autocar" type="twist_maneger">
         <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="30"/>
         <param name="maxYaw_rate" value="2"/>
         <remap from="path" to="wayPoint/path"/>
-        <remap from="cmd_vel" to="path_track/cmd_vel"/>
+        <remap from="cmd_vel" to="pureWpTrace/cmd_vel"/>
         <remap from="twist_maneger/cmd_vel" to="cmd_vel"/>
-    </node>
+    </node>-->
 
     <!--rviz-->
     <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/wpTrack.rviz" />

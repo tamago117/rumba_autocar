@@ -1,0 +1,7 @@
+obstacle_extractor:
+  use_scan: true
+  use_pcl: false
+  #frame_id: map
+
+#obstacle_tracker:
+  #frame_id: map

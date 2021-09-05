@@ -27,9 +27,6 @@ int main(int argc, char **argv)
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("wayPoint/path", 10);
 
     geometry_msgs::PoseStamped pose;
-    
-
-    
 
     ros::Rate loop_rate(1);
     while(ros::ok())

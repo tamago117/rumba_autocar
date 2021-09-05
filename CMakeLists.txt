@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2
   costmap_2d
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -233,8 +234,8 @@ target_link_libraries(wpLoad
   ${catkin_LIBRARIES}
 )
 
-add_executable(path_track   src/path_track.cpp)
-target_link_libraries(path_track
+add_executable(pureWpTrace   src/pureWpTrace.cpp)
+target_link_libraries(pureWpTrace
   ${catkin_LIBRARIES}
 )
 
@@ -260,6 +261,26 @@ target_link_libraries(wpVisualizer
 
 add_executable(twist_maneger   src/twist_maneger.cpp)
 target_link_libraries(twist_maneger
+  ${catkin_LIBRARIES}
+)
+
+add_executable(state_lattice_planner   src/state_lattice_planner.cpp)
+target_link_libraries(state_lattice_planner
+  ${catkin_LIBRARIES}
+)
+
+add_executable(lattice_planner_trace   src/lattice_planner_trace.cpp)
+target_link_libraries(lattice_planner_trace
+  ${catkin_LIBRARIES}
+)
+
+add_executable(safety_limit   src/safety_limit.cpp)
+target_link_libraries(safety_limit
+  ${catkin_LIBRARIES}
+)
+
+add_executable(simple_recovery   src/simple_recovery.cpp)
+target_link_libraries(simple_recovery
   ${catkin_LIBRARIES}
 )
 

@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
         - /TF1/Frames1
-        - /String1
       Splitter Ratio: 0.5
     Tree Height: 282
   - Class: rviz/Selection
@@ -277,9 +275,17 @@ Visualization Manager:
       Draw Behind: false
       Enabled: true
       Name: costmap
-      Topic: /dwa_path_plan/costmap
+      Topic: /state_lattice_planner/costmap
       Unreliable: false
       Use Timestamp: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 138; 226; 52
+      Enabled: true
+      Name: Polygon
+      Topic: /costmap_node/my_costmap/footprint
+      Unreliable: false
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -306,7 +312,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /waypoint/marker
+      Marker Topic: /wayPoint/marker
       Name: wayPoint
       Namespaces:
         waypoint_marker: true
@@ -314,7 +320,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /waypoint/markerText
+      Marker Topic: /wayPoint/markerText
       Name: wayPointNumber
       Namespaces:
         waypoint_marker: true
@@ -387,6 +393,25 @@ Visualization Manager:
       text size: 24
       top: 170
       width: 150
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /state_lattice_planner/marker_array
+      Name: MarkerArray
+      Namespaces:
+        plannig_point: true
+      Queue Size: 100
+      Value: true
+    - Circles color: 170; 0; 0
+      Class: Obstacles
+      Enabled: true
+      Margin color: 0; 170; 0
+      Name: Obstacles
+      Opacity: 0.75
+      Segments color: 170; 170; 0
+      Segments thickness: 0.029999999329447746
+      Topic: /tracked_obstacles
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -415,25 +440,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.818452835083008
+      Distance: 4.808371543884277
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.8124110698699951
-        Y: 0.21858884394168854
-        Z: 0.9211815595626831
+        X: 1.2351425886154175
+        Y: -0.2597409784793854
+        Z: 0.26116374135017395
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8597975373268127
+      Pitch: 1.4297970533370972
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.025413990020752
+      Yaw: 3.2654151916503906
     Saved: ~
 Window Geometry:
   Displays:
