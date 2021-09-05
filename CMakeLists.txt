@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2
   costmap_2d
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -270,6 +271,16 @@ target_link_libraries(state_lattice_planner
 
 add_executable(lattice_planner_trace   src/lattice_planner_trace.cpp)
 target_link_libraries(lattice_planner_trace
+  ${catkin_LIBRARIES}
+)
+
+add_executable(safety_limit   src/safety_limit.cpp)
+target_link_libraries(safety_limit
+  ${catkin_LIBRARIES}
+)
+
+add_executable(simple_recovery   src/simple_recovery.cpp)
+target_link_libraries(simple_recovery
   ${catkin_LIBRARIES}
 )
 

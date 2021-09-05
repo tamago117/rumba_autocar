@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="simulation" default="true"/>
+
+
+    <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
+        <arg name="nav_mode" default="mapping"/>
+        <arg name="gazebo" value="$(arg simulation)"/>
+        <arg name="move_base" default="false"/>
+    </include>
+
+    <!--joystick-->
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba">
+        <remap from="cmd_vel" to="safety_limit/cmd_vel_in"/>
+    </node>
+
+    <node pkg="rumba_autocar" name="laser2pc" type="laser2pc.py">
+        <remap from="scan" to="scan_filtered"/>
+    </node>
+    <node pkg="rumba_autocar" name="safety_limit" type="safety_limit" output="screen">
+        <param name="max_nn" value="100"/>
+        <param name="robot_radius" value="0.2"/>
+        <param name="x_max" value="3.0"/>
+        <param name="x_min" value="-1.0"/>
+        <param name="y_max" value="0.3"/>
+        <param name="y_min" value="-0.3"/>
+        <param name="loop_rate" value="50"/>
+        <param name="dt" value="0.3"/>
+        <param name="recovery_start_time" value="1"/>
+
+        <remap from="safety_limit/cmd_vel_out" to="cmd_vel"/>
+        <remap from="cloud" to="/laser2pc/pc2"/>
+     </node>
+
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/mapping.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    
+</launch>

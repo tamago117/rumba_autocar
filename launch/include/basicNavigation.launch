@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="config" default="$(find create_bringup)/config/default.yaml" />
     <arg name="nav_mode" default="slam"/>
     <arg name="gazebo" default="false"/>
     <arg name="world" default="turtlebot3_world.world"/>

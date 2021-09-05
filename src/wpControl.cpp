@@ -24,6 +24,18 @@ double poseStampDistance(const geometry_msgs::PoseStamped& pose1, const geometry
     return sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
 }
 
+template<class T> T constrain(T num, double minVal, double maxVal)
+{
+    if(num > maxVal){
+        num = maxVal;
+    }
+    if(num < minVal){
+        num = minVal;
+    }
+
+    return num;
+}
+
 int targetWp = 0;
 void targetWp_callback(const std_msgs::Int32& targetWp_num)
 {
@@ -99,6 +111,7 @@ int main(int argc, char** argv)
 
         double dt = 0.2;
         nowWp.data = targetWp.data - (target_pitch + maxSpeed*dt)/wp_pitch;
+        nowWp.data = constrain(nowWp.data, 0.0, path.poses.size());
 
         tarWp_pub.publish(targetWp);
         nowWp_pub.publish(nowWp);

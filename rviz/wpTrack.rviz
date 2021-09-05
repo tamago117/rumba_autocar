@@ -401,6 +401,17 @@ Visualization Manager:
         plannig_point: true
       Queue Size: 100
       Value: true
+    - Circles color: 170; 0; 0
+      Class: Obstacles
+      Enabled: true
+      Margin color: 0; 170; 0
+      Name: Obstacles
+      Opacity: 0.75
+      Segments color: 170; 170; 0
+      Segments thickness: 0.029999999329447746
+      Topic: /tracked_obstacles
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -466,6 +477,6 @@ Window Geometry:
     collapsed: false
   Width: 1299
   X: 67
-  Y: 1
+  Y: 27
   modeSelect:
     collapsed: false

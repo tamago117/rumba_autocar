@@ -183,7 +183,6 @@ int main(int argc, char** argv)
             curvatures = normalize(curvatures);
 
             //change velocity according to curvature (asteroid)
-            nowWp = constrain(nowWp, 0.0, path.poses.size());
             cmd_vel.linear.x = abs(maxSpeed * pow(sin(acos(std::cbrt(curvatures[nowWp]))), 3));
             //change velocity according to curvature (linear)
             //cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];

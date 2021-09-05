@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
+    <arg name="config" default="$(find create_bringup)/config/default.yaml" />
     <arg name="use_imu" default="false"/>
     <arg name="lidar" default="hokuyo"/>
 
