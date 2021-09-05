@@ -103,7 +103,7 @@ int main(int argc, char** argv)
             //distance
             if(!isReach){
                 if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= tar_deviation){
-                    isReach = true;
+                    //isReach = true;
                     mode_pub.publish(mode);
                 }
             }

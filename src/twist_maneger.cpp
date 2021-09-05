@@ -128,7 +128,11 @@ int main(int argc, char** argv)
             if(run_init){
                 //run mode
                 if(mode.data == "run"){
-                    double diffAngle = arrangeAngle(quat2yaw(path.poses[nowWp+(targetWp - nowWp)/2].pose.orientation) - nowPosition.getYaw());
+                    int index = nowWp+(targetWp - nowWp)/2;
+                    double dx = path.poses[index].pose.position.x - nowPosition.getPose().position.x;
+                    double dy = path.poses[index].pose.position.y - nowPosition.getPose().position.y;
+                    double targetAngle = atan2(dy, dx);
+                    double diffAngle = arrangeAngle(targetAngle - nowPosition.getYaw());
 
                     cmd_vel.linear.x = 0;
                     cmd_vel.angular.z = constrain(diffAngle * 1.5, -maxYaw_rate, maxYaw_rate);
@@ -156,6 +160,10 @@ int main(int argc, char** argv)
             if(recovery_mode.data == "safety_stop"){
                 mode.data = "safety_stop";
             }
+            if(recovery_mode.data == "run" && mode.data == "safety_stop"){
+                mode.data = "run";
+            }
+
             //recovery mode
             if(recovery_mode.data == "recovery"){
                 recovery_init = true;

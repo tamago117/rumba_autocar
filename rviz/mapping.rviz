@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
         - /TF1/Frames1
-        - /TFTrajectory1
       Splitter Ratio: 0.5
     Tree Height: 416
   - Class: rviz/Selection
@@ -169,7 +167,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /lrf_link/scan
+      Topic: /scan_filtered
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -254,36 +252,6 @@ Visualization Manager:
       duration: 1000
       frame: base_footprint
       line_width: 0.009999999776482582
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic: /lidar_link/scan
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -312,7 +280,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.0576839447021484
+      Distance: 4.798310279846191
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -327,10 +295,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5053980350494385
+      Pitch: 1.095397710800171
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.5503981709480286
+      Yaw: 3.1503984928131104
     Saved: ~
 Window Geometry:
   Displays:

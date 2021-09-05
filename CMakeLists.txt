@@ -284,4 +284,9 @@ target_link_libraries(simple_recovery
   ${catkin_LIBRARIES}
 )
 
+add_executable(laser2pc   src/laser2pc.cpp)
+target_link_libraries(laser2pc
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)
