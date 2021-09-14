@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
-        - /costmap1
-        - /Path2
       Splitter Ratio: 0.5
     Tree Height: 282
   - Class: rviz/Selection
@@ -66,29 +64,6 @@ Visualization Manager:
       Topic: /map
       Unreliable: false
       Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Billboards
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /wayPoint/path
-      Unreliable: false
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -292,131 +267,6 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 237; 212; 0
-      Enabled: true
-      Head Diameter: 0.003000000026077032
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Billboards
-      Line Width: 0.009999999776482582
-      Name: trajectory
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0.07999999821186066
-      Pose Color: 52; 101; 164
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.009999999776482582
-      Shaft Length: 0.10000000149011612
-      Topic: /dwa_path_plan/trajectory
-      Unreliable: false
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /wayPoint/marker
-      Name: wayPoint
-      Namespaces:
-        waypoint_marker: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /wayPoint/markerText
-      Name: wayPointNumber
-      Namespaces:
-        waypoint_marker: true
-      Queue Size: 100
-      Value: true
-    - Class: jsk_rviz_plugin/TFTrajectory
-      Enabled: true
-      Name: TFTrajectory
-      Value: true
-      color: 25; 255; 240
-      duration: 1000
-      frame: base_link
-      line_width: 0.019999999552965164
-    - Class: jsk_rviz_plugin/PieChart
-      Enabled: true
-      Name: velocity
-      Topic: /dwa_path_plan/vel_rviz
-      Value: true
-      auto color change: false
-      background color: 0; 0; 0
-      backround alpha: 0
-      clockwise rotate direction: false
-      foreground alpha: 0.699999988079071
-      foreground alpha 2: 0.4000000059604645
-      foreground color: 25; 255; 240
-      left: 5
-      max color: 255; 0; 0
-      max value: 1
-      min value: 0
-      show caption: true
-      size: 128
-      text size: 14
-      top: 10
-    - Class: jsk_rviz_plugin/PieChart
-      Enabled: true
-      Name: yawVelocity
-      Topic: /dwa_path_plan/yawVel_rviz
-      Value: true
-      auto color change: false
-      background color: 0; 0; 0
-      backround alpha: 0
-      clockwise rotate direction: false
-      foreground alpha: 0.699999988079071
-      foreground alpha 2: 0.4000000059604645
-      foreground color: 25; 255; 240
-      left: 138
-      max color: 255; 0; 0
-      max value: 1
-      min value: 0
-      show caption: true
-      size: 128
-      text size: 14
-      top: 10
-    - Align Bottom: false
-      Background Alpha: 0.800000011920929
-      Background Color: 0; 0; 0
-      Class: jsk_rviz_plugin/String
-      Enabled: true
-      Foreground Alpha: 0.800000011920929
-      Foreground Color: 255; 255; 255
-      Name: String
-      Overtake Color Properties: true
-      Overtake Position Properties: true
-      Topic: /mode
-      Value: true
-      font: DejaVu Sans Mono
-      height: 40
-      left: 10
-      line width: 2
-      text size: 24
-      top: 170
-      width: 150
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /state_lattice_planner/marker_array
-      Name: MarkerArray
-      Namespaces:
-        plannig_point: true
-      Queue Size: 100
-      Value: true
-    - Circles color: 170; 0; 0
-      Class: Obstacles
-      Enabled: true
-      Margin color: 0; 170; 0
-      Name: Obstacles
-      Opacity: 0.75
-      Segments color: 170; 170; 0
-      Segments thickness: 0.029999999329447746
-      Topic: /tracked_obstacles
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
       Color: 25; 255; 0
       Enabled: true
       Head Diameter: 0.30000001192092896
@@ -465,16 +315,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.793532371520996
+      Distance: 4.730854034423828
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6671565175056458
-        Y: -0.892231822013855
-        Z: 0.17007231712341309
+        X: 0.8851494789123535
+        Y: -0.6468213796615601
+        Z: 0.1952052265405655
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

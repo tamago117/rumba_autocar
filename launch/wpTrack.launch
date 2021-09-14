@@ -36,6 +36,7 @@
     <node name="state_lattice_planner" pkg="rumba_autocar" type="state_lattice_planner">
         <rosparam file="$(find rumba_autocar)/config/state_lattice_planner.yaml" command="load" />
         <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
+        <remap from="state_lattice_planner/costmap" to="costmap_node/my_costmap/costmap"/>
     </node>
     <node name="lattice_planner_trace" pkg="rumba_autocar" type="lattice_planner_trace" >
         <param name="base_link_frame_id" value="base_footprint"/>
@@ -48,8 +49,7 @@
         <remap from="path" to="wayPoint/path"/>
     </node>
     <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
-        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
-        <remap from="costmap_node/my_costmap/costmap" to="state_lattice_planner/costmap"/>
+        <rosparam command="load" file="$(find rumba_autocar)/config/costmap_params.yaml" />
     </node>
 
     <!--safety function-->

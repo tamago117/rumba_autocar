@@ -289,4 +289,9 @@ target_link_libraries(laser2pc
   ${catkin_LIBRARIES}
 )
 
+add_executable(astar_planning_node   src/astar_planning_node.cpp)
+target_link_libraries(astar_planning_node
+  ${catkin_LIBRARIES}
+)
+
 add_definitions(-std=c++14)

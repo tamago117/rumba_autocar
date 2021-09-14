@@ -10,11 +10,11 @@
     </include>
 
     <!--joystick-->
-    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
     <node name="joy_node" pkg="joy" type="joy_node"/>
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba"/>
 
     <!--rviz-->
     <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/mapping.rviz" />
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" respawn="true" />
     
 </launch>

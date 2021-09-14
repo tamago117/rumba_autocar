@@ -64,14 +64,14 @@ geometry_msgs::Twist cmd_vel_limit;
 std_msgs::String mode;
 
 // callback
-void callback_knn(sensor_msgs::PointCloud2 pc2){
+void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
 	g_vel.data = g_xmax;
     //
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_nan (new pcl::PointCloud<pcl::PointXYZ>); // NaN値あり
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // NaN値なし
 
     //
-    pcl::fromROSMsg(pc2, *cloud_nan);
+    pcl::fromROSMsg(*pc2, *cloud_nan);
 
     // NaN値が入ってるといろいろ面倒なので除去
     std::vector<int> nan_index;
@@ -82,6 +82,7 @@ void callback_knn(sensor_msgs::PointCloud2 pc2){
     cloud = pass_through(cloud, "y", g_ymin, g_ymax);
     gfiltered = cloud;
 
+    cmd_vel_limit = cmd_vel;
     //近傍点探索 and get average distance
     if(cloud->size()>0){
         //x座標とy座標だけをコピーしたPointCloudを作る
@@ -126,7 +127,6 @@ void callback_knn(sensor_msgs::PointCloud2 pc2){
         double next_robot_x = cmd_vel.linear.x * cos(next_robot_yaw) * dt;
         double next_robot_y = cmd_vel.linear.y * sin(next_robot_yaw) * dt;
 
-        cmd_vel_limit = cmd_vel;
         mode.data = "run";
         for(int i=0; i<k_indices.size(); i++){
             double point_x = cloud->points[k_indices[i]].x;

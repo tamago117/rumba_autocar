@@ -27,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -63,69 +63,39 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
+        base_foot_point:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_bottom_screw_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         camera_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        front_wheel_link:
+        front_lrf_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        gyro_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_cliff_sensor_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        leftfront_cliff_sensor_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        lidar_link:
+        rear_lrf_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        right_cliff_sensor_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        rightfront_cliff_sensor_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wall_sensor_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -177,38 +147,26 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
+        base_foot_point:
           Value: true
         base_link:
           Value: false
-        camera_bottom_screw_frame:
-          Value: false
         camera_link:
           Value: false
-        front_wheel_link:
-          Value: false
-        gyro_link:
-          Value: false
-        left_cliff_sensor_link:
-          Value: false
+        front_lrf_link:
+          Value: true
         left_wheel_link:
           Value: false
-        leftfront_cliff_sensor_link:
-          Value: false
-        lidar_link:
-          Value: true
         map:
           Value: true
         odom:
           Value: true
-        right_cliff_sensor_link:
-          Value: false
+        rear_lrf_link:
+          Value: true
         right_wheel_link:
           Value: false
-        rightfront_cliff_sensor_link:
-          Value: false
-        wall_sensor_link:
-          Value: false
+        velodyne:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -217,31 +175,7 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            base_footprint:
-              base_link:
-                camera_bottom_screw_frame:
-                  camera_link:
-                    {}
-                front_wheel_link:
-                  {}
-                gyro_link:
-                  {}
-                left_cliff_sensor_link:
-                  {}
-                left_wheel_link:
-                  {}
-                leftfront_cliff_sensor_link:
-                  {}
-                lidar_link:
-                  {}
-                right_cliff_sensor_link:
-                  {}
-                right_wheel_link:
-                  {}
-                rightfront_cliff_sensor_link:
-                  {}
-                wall_sensor_link:
-                  {}
+            {}
       Update Interval: 0
       Value: true
     - Class: jsk_rviz_plugin/TFTrajectory
@@ -287,18 +221,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6695724725723267
-        Y: -0.3722377419471741
-        Z: -0.2102479785680771
+        X: 0.32552042603492737
+        Y: 0.36963558197021484
+        Z: -0.383987694978714
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.095397710800171
+      Pitch: 0.7803980112075806
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.1503984928131104
+      Yaw: 2.730396032333374
     Saved: ~
 Window Geometry:
   Displays:
