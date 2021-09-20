@@ -264,13 +264,13 @@ target_link_libraries(twist_maneger
   ${catkin_LIBRARIES}
 )
 
-add_executable(state_lattice_planner   src/state_lattice_planner.cpp)
-target_link_libraries(state_lattice_planner
+add_executable(lane_planner   src/lane_planner.cpp)
+target_link_libraries(lane_planner
   ${catkin_LIBRARIES}
 )
 
-add_executable(lattice_planner_trace   src/lattice_planner_trace.cpp)
-target_link_libraries(lattice_planner_trace
+add_executable(lane_planner_trace   src/lane_planner_trace.cpp)
+target_link_libraries(lane_planner_trace
   ${catkin_LIBRARIES}
 )
 

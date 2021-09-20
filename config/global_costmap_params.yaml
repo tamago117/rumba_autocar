@@ -4,7 +4,7 @@ my_costmap:
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
   global_frame: map
   robot_base_frame: base_footprint
-  footprint: [[-0.22, 0], [-0.16, 0.16], [0, 0.22], [0.16, 0.16], [0.22, 0], [0.16, -0.16], [0, -0.22], [-0.16, -0.16]]
+  footprint: [[-0.3, 0], [-0.21, 0.21], [0, 0.3], [0.21, 0.21], [0.3, 0], [0.21, -0.21], [0, -0.3], [-0.21, -0.21]]
   update_frequency: 2.0
   publish_frequency: 2.0
   static_layer:
@@ -12,4 +12,4 @@ my_costmap:
     track_unknown_space: false
     subscribe_to_updates: true
   inflation_layer:
-    inflation_radius: 0.40
+    inflation_radius: 0.45

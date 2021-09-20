@@ -1,5 +1,5 @@
 /**
-* @file lattice_planner_trace.cpp
+* @file lane_planner_trace.cpp
 * @brief tracking  path which generated state lattice planner
 * @author Michikuni Eguchi
 * @date 2021.9.1
@@ -142,7 +142,7 @@ template<class T> T constrain(T num, double minVal, double maxVal)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "lattice_planner_trace");
+    ros::init(argc, argv, "lane_planner_trace");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
 
@@ -162,8 +162,8 @@ int main(int argc, char** argv)
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber nowWp_sub = nh.subscribe("nowWp", 50, nowWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
-    ros::Subscriber latticePlanPath_sub = nh.subscribe("state_lattice_planner/path", 50, latticePlanPath_callback);
-    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("lattice_planner_trace/cmd_vel", 10);
+    ros::Subscriber latticePlanPath_sub = nh.subscribe("lane_planner/path", 50, latticePlanPath_callback);
+    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("lane_planner_trace/cmd_vel", 10);
 
     ctr::PurePursuit pure_pursuit(max_angular_vel);
     tf_position nowPosition(map_id, base_link_id, rate);

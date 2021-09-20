@@ -33,12 +33,11 @@
     </node>
 
 
-    <node name="state_lattice_planner" pkg="rumba_autocar" type="state_lattice_planner">
-        <rosparam file="$(find rumba_autocar)/config/state_lattice_planner.yaml" command="load" />
-        <remap from="cmd_vel" to="dwa_path_plan/cmd_vel"/>
-        <remap from="state_lattice_planner/costmap" to="costmap_node/my_costmap/costmap"/>
+    <node name="lane_planner" pkg="rumba_autocar" type="lane_planner">
+        <rosparam file="$(find rumba_autocar)/config/lane_planner.yaml" command="load" />
+        <remap from="lane_planner/costmap" to="costmap_node/my_costmap/costmap"/>
     </node>
-    <node name="lattice_planner_trace" pkg="rumba_autocar" type="lattice_planner_trace" >
+    <node name="lane_planner_trace" pkg="rumba_autocar" type="lane_planner_trace" >
         <param name="base_link_frame_id" value="base_footprint"/>
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="50"/>
@@ -67,8 +66,9 @@
         <param name="dt" value="0.15"/>
         <param name="recovery_start_time" value="0.5"/>
 
-        <remap from="safety_limit/cmd_vel_in" to="lattice_planner_trace/cmd_vel"/>
+        <remap from="safety_limit/cmd_vel_in" to="lane_planner_trace/cmd_vel"/>
         <remap from="cloud" to="laser2pc/pc2"/>
+        <remap from="safety_limit/costmap" to="costmap_node/my_costmap/costmap"/>
      </node>
      <node pkg="rumba_autocar" name="simple_recovery" type="simple_recovery">
         <param name="linear_vel" value="-0.3"/>

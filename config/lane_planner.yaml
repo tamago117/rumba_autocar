@@ -1,4 +1,4 @@
-state_lattice_planner:
+lane_planner:
     map_frame_id : map
     lane_width : 1.2
     vehicle_width : 0.3

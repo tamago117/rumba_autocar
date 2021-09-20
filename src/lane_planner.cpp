@@ -123,9 +123,9 @@ template<class T> T constrain(T num, double minVal, double maxVal)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "state_lattice_planner");
+    ros::init(argc, argv, "lane_planner");
     ros::NodeHandle nh;
-    ros::NodeHandle pnh("~/state_lattice_planner");
+    ros::NodeHandle pnh("~/lane_planner");
 
     std::string base_link_id, map_id;
     //pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
@@ -143,9 +143,9 @@ int main(int argc, char** argv)
 
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("wayPoint/path", 50, path_callback);
-    ros::Subscriber cost_sub = nh.subscribe("state_lattice_planner/costmap", 10, cost_callback);
-    ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("state_lattice_planner/path", 10);
-    ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("state_lattice_planner/marker_array", 10);
+    ros::Subscriber cost_sub = nh.subscribe("lane_planner/costmap", 10, cost_callback);
+    ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("lane_planner/path", 10);
+    ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("lane_planner/marker_array", 10);
 
     ros::Rate loop_rate(rate);
 

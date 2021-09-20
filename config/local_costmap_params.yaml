@@ -4,7 +4,7 @@ my_costmap:
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
   global_frame: map
   robot_base_frame: base_footprint
-  footprint: [[-0.22, 0], [-0.16, 0.16], [0, 0.22], [0.16, 0.16], [0.22, 0], [0.16, -0.16], [0, -0.22], [-0.16, -0.16]]
+  footprint: [[-0.3, 0], [-0.21, 0.21], [0, 0.3], [0.21, 0.21], [0.3, 0], [0.21, -0.21], [0, -0.3], [-0.21, -0.21]]
   rolling_window: true
   width: 4.0
   height: 5.0
