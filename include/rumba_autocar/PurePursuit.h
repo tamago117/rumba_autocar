@@ -95,9 +95,7 @@ double PurePursuit::getYawVel(const geometry_msgs::Pose& nowPos, const geometry_
     double tarY = tarPos.position.y;
     double tarYaw = quat2yaw(tarPos.orientation);
 
-    std::cout<<nowYaw<<std::endl;
-
-    double L = sqrt(pow(nowX, 2)+pow(nowY, 2)) - sqrt(pow(tarX, 2)+pow(tarY, 2));
+    double L = sqrt(pow(tarX - nowX, 2) + pow(tarY - nowY, 2));
 
     //角度が180度を超えないようにする
     double angle1 = atan2(tarY-nowY, tarX-nowX) - nowYaw + 2*M_PI;

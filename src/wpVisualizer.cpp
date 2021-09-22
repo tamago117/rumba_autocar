@@ -50,15 +50,21 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "wpVisualizer");
     ros::NodeHandle nh;
+    ros::NodeHandle pnh("~");
 
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("wayPoint/marker", 10);
     ros::Publisher markerText_pub = nh.advertise<visualization_msgs::MarkerArray>("wayPoint/markerText", 10);
     ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
 
+    double markerSize;
+    pnh.param<double>("markerSize", markerSize, 1.0);
+    
     ros::Rate loop_rate(10);
 
-    
+    const double marker_diameter = 0.1*markerSize;
+    const double marker_height = 0.03*markerSize;
+    const double text_size = 0.1*markerSize;
     while(ros::ok())
     {
         visualization_msgs::MarkerArray marker_array, markerText_array;

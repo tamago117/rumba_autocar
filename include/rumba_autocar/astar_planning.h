@@ -32,6 +32,8 @@ private:
     int getCost(double x, double y);
     void calc_final_path(Node* goal, std::vector<double>& fx, std::vector<double>& fy);
 
+    int xwidth;
+    int ywidth;
     double resolution;
     int costmapThreshold;
     double w_gain;
@@ -60,8 +62,8 @@ bool a_star::planning(std::vector<double>& fx, std::vector<double>& fy, const ge
     int min_oy = (int)std::round(costmap.info.origin.position.y/resolution);
     int max_oy = (int)std::round((costmap.info.origin.position.y + costmap.info.resolution * costmap.info.height)/resolution);
 
-    int xwidth = max_ox-min_ox;
-    int ywidth = max_oy-min_oy;
+    xwidth = max_ox-min_ox;
+    ywidth = max_oy-min_oy;
 
     std::vector<std::vector<int>> visit_map(xwidth, std::vector<int>(ywidth, 0));
     std::vector<std::vector<double>> path_cost(xwidth, std::vector<double>(ywidth, std::numeric_limits<double>::max()));
@@ -193,7 +195,15 @@ void a_star::calc_final_path(Node* goal, std::vector<double>& fx, std::vector<do
         node = node->p_node;
         rx.push_back(node->x * resolution);
         ry.push_back(node->y * resolution);
+
     }
+    //delete final index(now robot position)
+    rx.pop_back();
+    ry.pop_back();
+
+    //inverse
+    std::reverse(std::begin(rx), std::end(rx));
+    std::reverse(std::begin(ry), std::end(ry));
 
     fx = rx;
     fy = ry;

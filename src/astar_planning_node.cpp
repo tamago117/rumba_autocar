@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Quaternion.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <string>
@@ -20,6 +21,29 @@ nav_msgs::OccupancyGrid costmap;
 void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 {
     costmap = costmap_message;
+}
+
+geometry_msgs::Quaternion yaw_to_geometry_quat(double yaw){
+    double roll = 0;
+    double pitch = 0;
+    tf::Quaternion quat=tf::createQuaternionFromRPY(roll,pitch,yaw);
+    geometry_msgs::Quaternion geometry_quat;
+    quaternionTFToMsg(quat, geometry_quat);
+    return geometry_quat;
+}
+
+double arrangeAngle(double angle)
+{
+    while(angle>M_PI)
+    {
+        angle -= 2*M_PI;
+    }
+    while(angle<-M_PI)
+    {
+        angle += 2*M_PI;
+    }
+
+    return angle;
 }
 
 int main(int argc, char** argv)
@@ -87,6 +111,43 @@ int main(int argc, char** argv)
                 }
             }
 
+            //path heading angle
+            std::vector<double> angles;
+            for(int i=0; i<r_x.size(); i++){
+                double angle;
+
+                //start point
+                //angle : -pi~pi
+                if(i==0){
+                    double dx = r_x[i+1] - r_x[i];
+                    double dy = r_y[i+1] - r_y[i];
+                    angle = arrangeAngle(atan2(dy, dx));
+                //end point
+                }else if(i==r_x.size()-1){
+                    double dx = r_x[i] - r_x[i-1];
+                    double dy = r_y[i] - r_y[i-1];
+                    angle = arrangeAngle(atan2(dy, dx));
+                }else{
+                    double dx1 = r_x[i] - r_x[i-1];
+                    double dy1 = r_y[i] - r_y[i-1];
+                    double angle1 = arrangeAngle(atan2(dy1, dx1));
+
+                    double dx2 = r_x[i+1] - r_x[i];
+                    double dy2 = r_y[i+1] - r_y[i];
+                    double angle2 = arrangeAngle(atan2(dy2, dx2));
+
+                    /*if(angle1-angle2<M_PI){
+                        angle = (angle1 + angle2)/2;
+                    }else{
+                        angle = angle2;
+                    }*/
+                    //うまくいかないので一旦これで
+                    angle = angle1;
+                }
+                angles.push_back(angle);
+
+            }
+
             //convert path message
             nav_msgs::Path plan_path;
             for(int i=0; i<r_x.size(); i++){
@@ -94,6 +155,7 @@ int main(int argc, char** argv)
                 pose.header.frame_id = map_id;
                 pose.pose.position.x = r_x[i];
                 pose.pose.position.y = r_y[i];
+                pose.pose.orientation = yaw_to_geometry_quat(angles[i]);
 
                 plan_path.poses.push_back(pose);
             }
