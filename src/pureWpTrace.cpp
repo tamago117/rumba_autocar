@@ -156,7 +156,7 @@ int main(int argc, char** argv)
             curvatures = normalize(curvatures);
 
             //change velocity according to curvature (asteroid)
-            cmd_vel.linear.x = maxSpeed * pow(sin(acos(pow(curvatures[targetWp], 1/3))), 3);
+            cmd_vel.linear.x = maxSpeed * pow(sin(acos(std::cbrt(curvatures[targetWp]))), 3);
             //change velocity according to curvature (linear)
             //cmd_vel.linear.x = maxSpeed - (maxSpeed - minSpeed)*curvatures[targetWp];
 

@@ -244,6 +244,11 @@ target_link_libraries(wpControl
   ${catkin_LIBRARIES}
 )
 
+add_executable(wpSelect   src/wpSelect.cpp)
+target_link_libraries(wpSelect
+  ${catkin_LIBRARIES}
+)
+
 add_executable(costmap_node   src/costmap_node.cpp)
 target_link_libraries(costmap_node
   ${catkin_LIBRARIES}
@@ -264,13 +269,8 @@ target_link_libraries(twist_maneger
   ${catkin_LIBRARIES}
 )
 
-add_executable(state_lattice_planner   src/state_lattice_planner.cpp)
-target_link_libraries(state_lattice_planner
-  ${catkin_LIBRARIES}
-)
-
-add_executable(lattice_planner_trace   src/lattice_planner_trace.cpp)
-target_link_libraries(lattice_planner_trace
+add_executable(lane_planner   src/lane_planner.cpp)
+target_link_libraries(lane_planner
   ${catkin_LIBRARIES}
 )
 
@@ -281,6 +281,26 @@ target_link_libraries(safety_limit
 
 add_executable(simple_recovery   src/simple_recovery.cpp)
 target_link_libraries(simple_recovery
+  ${catkin_LIBRARIES}
+)
+
+add_executable(laser2pc   src/laser2pc.cpp)
+target_link_libraries(laser2pc
+  ${catkin_LIBRARIES}
+)
+
+add_executable(astar_planning_node   src/astar_planning_node.cpp)
+target_link_libraries(astar_planning_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(pure_posePursuit   src/pure_posePursuit.cpp)
+target_link_libraries(pure_posePursuit
+  ${catkin_LIBRARIES}
+)
+
+add_executable(velocity_check_test   src/velocity_check_test.cpp)
+target_link_libraries(velocity_check_test
   ${catkin_LIBRARIES}
 )
 

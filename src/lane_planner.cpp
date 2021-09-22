@@ -2,19 +2,15 @@
 #include <math.h>
 #include <vector>
 #include <string>
-#include <std_msgs/Int32.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/ColorRGBA.h>
 #include <tf/transform_broadcaster.h>
-
-int targetWp = 0;
-void targetWp_callback(const std_msgs::Int32& targetWp_num)
-{
-    targetWp = targetWp_num.data;
-}
+#include "rumba_autocar/tf_position.h"
 
 nav_msgs::Path path;
 void path_callback(const nav_msgs::Path& path_message)
@@ -28,6 +24,12 @@ void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 {
     costmap = costmap_message;
 
+}
+
+geometry_msgs::Twist robot_now_vel;
+void robot_vel_callback(const geometry_msgs::Twist& robot_vel_message)
+{
+    robot_now_vel = robot_vel_message;
 }
 
 std_msgs::ColorRGBA set_color(double r, double g, double b, double a)
@@ -121,14 +123,23 @@ template<class T> T constrain(T num, double minVal, double maxVal)
     return num;
 }
 
+double poseStampDistance(const geometry_msgs::PoseStamped& pose1, const geometry_msgs::PoseStamped& pose2)
+{
+    double diffX = pose1.pose.position.x - pose2.pose.position.x;
+    double diffY = pose1.pose.position.y - pose2.pose.position.y;
+    double diffZ = pose1.pose.position.z - pose2.pose.position.z;
+
+    return sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
+}
+
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "state_lattice_planner");
+    ros::init(argc, argv, "lane_planner");
     ros::NodeHandle nh;
-    ros::NodeHandle pnh("~/state_lattice_planner");
+    ros::NodeHandle pnh("~/lane_planner");
 
     std::string base_link_id, map_id;
-    //pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
+    pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
     pnh.param<std::string>("map_frame_id", map_id, "map");
     double l_width, v_width;
     pnh.param<double>("lane_width", l_width, 2.5);
@@ -138,36 +149,58 @@ int main(int argc, char** argv)
     double distanceCost_gain, obstacleCost_gain;
     pnh.param<double>("distanceCost_gain", distanceCost_gain, 1.0);
     pnh.param<double>("obstacleCost_gain", obstacleCost_gain, 1.0);
+    double obst_sense_dis;
+    pnh.param<double>("obstacle_sense_distance", obst_sense_dis, 2.0);
+    double markerSize;
+    pnh.param<double>("markerSize", markerSize, 1.0);
+    double maxVel;
+    pnh.param<double>("maxVelocity", maxVel, 1.0);
+    double disTarget_maxVel;
+    pnh.param<double>("distanceTarget_maxVelocity", disTarget_maxVel, 1.0);
+    double distance_rate;
+    pnh.param("distance_rate", distance_rate, 0.3);
     double rate;
     pnh.param<double>("loop_rate", rate, 30);
 
-    ros::Subscriber targetWp_sub = nh.subscribe("targetWp", 50, targetWp_callback);
-    ros::Subscriber path_sub = nh.subscribe("wayPoint/path", 50, path_callback);
-    ros::Subscriber cost_sub = nh.subscribe("state_lattice_planner/costmap", 10, cost_callback);
-    ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("state_lattice_planner/path", 10);
-    ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("state_lattice_planner/marker_array", 10);
+    ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
+    ros::Subscriber cost_sub = nh.subscribe("lane_planner/costmap", 10, cost_callback);
+    ros::Subscriber robot_vel_sub = nh.subscribe("robot_now_vel", 10, robot_vel_callback);
+    ros::Publisher pose_pub = nh.advertise<geometry_msgs::Pose>("lane_planner/pose_out", 10);
+    ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("lane_planner/marker_array", 10);
 
     ros::Rate loop_rate(rate);
 
-    const int repeatNum = 3;
+    tf_position nowPosition(map_id, base_link_id, rate);
+
     while(ros::ok())
     {
         if(path.poses.size() > 0){
+            //change targer pose interval following to robot velocity
+            double target_interval = ((1-distance_rate)*disTarget_maxVel/maxVel)*abs(robot_now_vel.linear.x) + distance_rate*disTarget_maxVel;
+            //updata target way point to let distance be target_deviation
+            int targetPose = 0;
+            while(!(poseStampDistance(path.poses[targetPose], nowPosition.getPoseStamped()) >= target_interval))
+            {
+                // path end point
+                if(targetPose >= (path.poses.size()-1)){
+                    break;
+                }
+                targetPose++;
+            }
+
             std::vector<double> lane_center_x;
             std::vector<double> lane_center_y;
             std::vector<double> lane_heading;
-            //calculate cost using 3 way points
-            for(int i=-1; i<repeatNum-1; i++){
-                int index = constrain(targetWp+i, 0, path.poses.size());
+            //calculate cost using point from start to targetPose
+            for(int i=0; i<targetPose; i++){
+                int index = constrain(i, 0, path.poses.size());
 
                 lane_center_x.push_back(path.poses[index].pose.position.x);
                 lane_center_y.push_back(path.poses[index].pose.position.y);
                 lane_heading.push_back(arrangeAngle(quat2yaw(path.poses[index].pose.orientation)));
             }
-            /*double lane_center_x = path.poses[targetWp].pose.position.x;
-            double lane_center_y = path.poses[targetWp].pose.position.y;
-            double lane_heading = quat2yaw(path.poses[targetWp].pose.orientation);
-            lane_heading = arrangeAngle(lane_heading);*/
+
+
 
             //set target point and calculate each costs
             std::vector<std::vector<double>> targetPoint;
@@ -178,7 +211,7 @@ int main(int argc, char** argv)
                 //calculate cost using 3 way points
                 double distance = 0;
                 double cost = 0;
-                for(int j=0; j<repeatNum; j++){
+                for(int j=0; j<targetPose; j++){
                     //set target point
                     double delta = (l_width - v_width)*i/(sampling_num-1) - 0.5*(l_width -v_width);
                     double xf = lane_center_x[j] - delta*sin(lane_heading[j]);
@@ -186,7 +219,7 @@ int main(int argc, char** argv)
                     std::vector<double> temp{xf, yf, lane_heading[j]};
 
                     //set array target way point
-                    if(j==1){
+                    if(j==targetPose-1){
                         targetPoint.push_back(temp);
                     }
 
@@ -194,13 +227,14 @@ int main(int argc, char** argv)
                     distance += sqrt(pow(xf - lane_center_x[j], 2)+pow(yf - lane_center_y[j], 2));
                     cost += getCost(xf, yf);
                 }
-                
+
                 distances.push_back(distance);
                 costs.push_back(cost);
             }
 
-            //-> 0~100*3
-            distances = normalize(distances, 0.0, 100.0*repeatNum);
+
+            //-> 0~100*repeatNum
+            distances = normalize(distances, 0.0, 100.0*targetPose);
 
             //select best path
             double minCost = INFINITY;
@@ -214,13 +248,12 @@ int main(int argc, char** argv)
                 }
             }
 
-
             //create marker array
             // config arrow shape
             geometry_msgs::Vector3 arrow;
-            arrow.x = 0.02;
-            arrow.y = 0.04;
-            arrow.z = 0.1;
+            arrow.x = 0.02 * markerSize;
+            arrow.y = 0.04 * markerSize;
+            arrow.z = 0.1 * markerSize;
 
             visualization_msgs::MarkerArray marker_array;
             marker_array.markers.resize(sampling_num);
@@ -230,8 +263,8 @@ int main(int argc, char** argv)
                 linear_start.y = targetPoint[i][1];
                 linear_start.z = 0.1;
                 geometry_msgs::Point linear_end;
-                linear_end.x = 0.2 * cos(lane_heading[1]) + targetPoint[i][0];
-                linear_end.y = 0.2 * sin(lane_heading[1]) + targetPoint[i][1];
+                linear_end.x = 0.2 * markerSize * cos(targetPoint[i][2]) + targetPoint[i][0];
+                linear_end.y = 0.2 * markerSize * sin(targetPoint[i][2]) + targetPoint[i][1];
                 linear_end.z = 0.1;
 
 
@@ -256,18 +289,14 @@ int main(int argc, char** argv)
                 }
             }
 
-            //best path head to target point
-            nav_msgs::Path plan_path;
-            plan_path.header = path.header;
-            geometry_msgs::PoseStamped pose;
-            pose.pose.position.x = targetPoint[bestPathNum][0];
-            pose.pose.position.y = targetPoint[bestPathNum][1];
-            pose.pose.position.z = 0;
-            pose.pose.orientation = path.poses[targetWp].pose.orientation;
+            //best pose head to target point
+            geometry_msgs::Pose pose;
+            pose.position.x = targetPoint[bestPathNum][0];
+            pose.position.y = targetPoint[bestPathNum][1];
+            pose.position.z = 0;
+            pose.orientation = path.poses[targetPose].pose.orientation;
 
-            plan_path.poses.push_back(pose);
-
-            path_pub.publish(plan_path);
+            pose_pub.publish(pose);
             marker_pub.publish(marker_array);
         }
 

@@ -1,16 +1,17 @@
 /**
-* @file wpControll.cpp
+* @file wpSelect.cpp
 * @brief select target way point
 * @author Michikuni Eguchi
-* @date 2021.7.29
-* @details 位置情報やインタフェースからpublishするtarget way point を選ぶ
+* @date 2021.9.21
+* @details 位置情報からpublishするtarget way pointとなるpose を選ぶ
+*          (等間隔で設定されてない5〜10mの少し離れた間隔のwp pointをもとにする)
 */
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <nav_msgs/Path.h>
-#include <iostream>
 #include <string>
 #include <rumba_autocar/tf_position.h>
 
@@ -36,12 +37,6 @@ template<class T> T constrain(T num, double minVal, double maxVal)
     return num;
 }
 
-int targetWp = 0;
-void targetWp_callback(const std_msgs::Int32& targetWp_num)
-{
-    targetWp = targetWp_num.data;
-}
-
 nav_msgs::Path path;
 void path_callback(const nav_msgs::Path path_message)
 {
@@ -57,38 +52,41 @@ int main(int argc, char** argv)
     std::string map_id, base_link_id;
     pnh.param<std::string>("map_frame_id", map_id, "map");
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
-    double target_pitch, wp_pitch, tar_deviation;
-    pnh.param<double>("target_pitch", target_pitch, 1.0);
-    pnh.param<double>("waypoint_pitch", wp_pitch, 0.1);
-    pnh.param<double>("target_deviation", tar_deviation, 0.05);
+    double target_deviation, fin_tar_deviation;
+    pnh.param<double>("target_deviation", target_deviation, 0.5);
+    pnh.param<double>("final_target_deviation", fin_tar_deviation, 0.1);
     double rate;
     pnh.param<double>("loop_rate", rate, 100);
-    double maxSpeed;
-    pnh.param<double>("max_speed", maxSpeed, 1.0);
+    double maxVelocity;
+    pnh.param<double>("maxVelocity", maxVelocity, 1.0);
 
     tf_position nowPosition(map_id, base_link_id, rate);
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Publisher tarWp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
-    ros::Publisher nowWp_pub = nh.advertise<std_msgs::Int32>("nowWp", 10);
+    ros::Publisher tarPos_pub = nh.advertise<geometry_msgs::PoseStamped>("targetWpPose", 10);
     ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode_select/mode", 10);
 
     ros::Rate loop_rate(rate);
 
     bool trace_wp_mode = true;
     std_msgs::Int32 targetWp;
-    std_msgs::Int32 nowWp;
 
     std_msgs::String mode;
     const std::string angleAdjust = "adjust";
     mode.data = angleAdjust;
+
     bool isReach = false;
+
+    targetWp.data = 0;
+
+    geometry_msgs::PoseStamped tarPos;
     while(ros::ok())
     {
         if(path.poses.size()>0){
             if(trace_wp_mode){
-                //target_pitchになるよう target way pointの更新
-                while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= target_pitch))
+                //target_deviationになるよう target way pointの更新
+                while(!(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) >= target_deviation))
                 {
                     //end point
                     if(targetWp.data >= (path.poses.size()-1)){
@@ -97,24 +95,25 @@ int main(int argc, char** argv)
                     targetWp.data++;
                 }
             }
-        }
 
-        if(targetWp.data >= (path.poses.size()-1)){
-            //distance
-            if(!isReach){
-                if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= tar_deviation){
-                    //isReach = true;
-                    mode_pub.publish(mode);
+            if(targetWp.data >= (path.poses.size()-1)){
+                //distance
+                if(!isReach){
+                    if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= fin_tar_deviation){
+                        //isReach = true;
+                        mode_pub.publish(mode);
+                    }
                 }
             }
+
+            tarPos.header.frame_id = path.header.frame_id;
+            tarPos.header.stamp = ros::Time::now();
+            tarPos.pose = path.poses[targetWp.data].pose;
+
+            tarPos_pub.publish(tarPos);
+            tarWp_pub.publish(targetWp);
+
         }
-
-        double dt = 0.2;
-        nowWp.data = targetWp.data - (target_pitch + maxSpeed*dt)/wp_pitch;
-        nowWp.data = constrain(nowWp.data, 0.0, path.poses.size());
-
-        tarWp_pub.publish(targetWp);
-        nowWp_pub.publish(nowWp);
 
         ros::spinOnce();
         loop_rate.sleep();

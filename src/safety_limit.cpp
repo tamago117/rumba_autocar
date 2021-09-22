@@ -16,9 +16,12 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/filters/passthrough.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
 #include <string>
+#include <limits>
+#include "rumba_autocar/tf_position.h"
 
 const std::string safety_stop = "safety_stop";
 const std::string recovery = "recovery";
@@ -64,14 +67,14 @@ geometry_msgs::Twist cmd_vel_limit;
 std_msgs::String mode;
 
 // callback
-void callback_knn(sensor_msgs::PointCloud2 pc2){
+void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
 	g_vel.data = g_xmax;
     //
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_nan (new pcl::PointCloud<pcl::PointXYZ>); // NaN値あり
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // NaN値なし
 
     //
-    pcl::fromROSMsg(pc2, *cloud_nan);
+    pcl::fromROSMsg(*pc2, *cloud_nan);
 
     // NaN値が入ってるといろいろ面倒なので除去
     std::vector<int> nan_index;
@@ -82,6 +85,7 @@ void callback_knn(sensor_msgs::PointCloud2 pc2){
     cloud = pass_through(cloud, "y", g_ymin, g_ymax);
     gfiltered = cloud;
 
+    cmd_vel_limit = cmd_vel;
     //近傍点探索 and get average distance
     if(cloud->size()>0){
         //x座標とy座標だけをコピーしたPointCloudを作る
@@ -126,7 +130,6 @@ void callback_knn(sensor_msgs::PointCloud2 pc2){
         double next_robot_x = cmd_vel.linear.x * cos(next_robot_yaw) * dt;
         double next_robot_y = cmd_vel.linear.y * sin(next_robot_yaw) * dt;
 
-        cmd_vel_limit = cmd_vel;
         mode.data = "run";
         for(int i=0; i<k_indices.size(); i++){
             double point_x = cloud->points[k_indices[i]].x;
@@ -158,12 +161,40 @@ void callback_knn(sensor_msgs::PointCloud2 pc2){
         /*float tsum = 0.0;
         for(int i=0; i<k_indices.size();i++) tsum += cloud->points[k_indices[i]].x;
         float tave = tsum / k_indices.size(); // get average
-
-
         g_vel.data = tave;
         //ROS_INFO("Ave. distance of %i NN in rad. %lf \t :%lf", max_nn, radius, tave);
         */
 
+    }
+}
+
+nav_msgs::OccupancyGrid costmap;
+void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
+{
+    costmap = costmap_message;
+}
+
+int getCost(double x, double y)
+{
+    //x = costmap.info.origin.position.x + x_grid*costmap.info.resolution
+    int x_grid = abs((x - costmap.info.origin.position.x)/costmap.info.resolution);
+    int y_grid = abs((y - costmap.info.origin.position.y)/costmap.info.resolution);
+
+    int data_pos = costmap.info.width * y_grid + x_grid;
+
+    if(data_pos > 0 && data_pos < costmap.data.size()){
+        return costmap.data[data_pos];
+    }else{
+        return std::numeric_limits<int>::min();
+    }
+}
+
+bool check_around_obstacle(const geometry_msgs::Pose& nowPos)
+{
+    if(getCost(nowPos.position.x, nowPos.position.y)>10){
+        return true;
+    }else{
+        return false;
     }
 }
 
@@ -179,9 +210,11 @@ int main(int argc, char** argv)
     ros::Publisher mode_pub = nh.advertise<std_msgs::String>("safety_limit/mode", 10);
     // subscribe
     ros::Subscriber cmd_sub = nh.subscribe("safety_limit/cmd_vel_in", 10, cmd_callback);
-    ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, callback_knn);
+    ros::Subscriber pc2_sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, callback_knn);
+    ros::Subscriber cost_sub = nh.subscribe("safety_limit/costmap", 10, cost_callback);
 
     //** set parameter from ros command
+    double lowMode_speedRatio;
     pnh.param<double>("x_max", g_xmax, 5.0);
     pnh.param<double>("x_min", g_xmin, -0.5);
     pnh.param<double>("y_max", g_ymax, 0.4);
@@ -191,12 +224,33 @@ int main(int argc, char** argv)
     pnh.param<int>("loop_rate", rate, 50);
     pnh.param<double>("dt", dt, 0.3);
     pnh.param<double>("recovery_start_time", recovery_start_time, 2.0);
+    pnh.param<double>("lowMode_speedRatio", lowMode_speedRatio, 0.5);
+    bool dangerous_potential;
+    pnh.param<bool>("dangerous_potential", dangerous_potential, true);
+    std::string map_id, base_link_id;
+    pnh.param<std::string>("map_frame_id", map_id, "map");
+    pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
+
+    tf_position nowPosition(map_id, base_link_id, rate);
 
     ros::Rate loop_rate(rate);
     while(ros::ok())
     {
+        geometry_msgs::Twist cmd_vel_out;
+
+        cmd_vel_out = cmd_vel_limit;
+        if(costmap.data.size()>0){
+            if(dangerous_potential){
+                if(check_around_obstacle(nowPosition.getPose())){
+                    cmd_vel_out.linear.x = cmd_vel_limit.linear.x * lowMode_speedRatio;
+                    cmd_vel_out.angular.z = cmd_vel_limit.angular.z * lowMode_speedRatio;
+                }
+            }
+            
+        }
+
         //pub.publish(gfiltered);
-        cmd_pub.publish(cmd_vel_limit);
+        cmd_pub.publish(cmd_vel_out);
         mode_pub.publish(mode);
 
         ros::spinOnce ();

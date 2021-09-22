@@ -15,7 +15,7 @@
         <remap from="cmd_vel" to="safety_limit/cmd_vel_in"/>
     </node>
 
-    <node pkg="rumba_autocar" name="laser2pc" type="laser2pc.py">
+    <node pkg="rumba_autocar" name="laser2pc" type="laser2pc">
         <remap from="scan" to="scan_filtered"/>
     </node>
     <node pkg="rumba_autocar" name="safety_limit" type="safety_limit" output="screen">

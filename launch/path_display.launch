@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="fileName" default="turtlebot_world_way2.csv"/>
+    <arg name="fileName" default="turtlebot_world_wayA.csv"/>
     <!--<arg name="fileName" default="house_way.csv"/>-->
     <arg name="mapFile" default = "$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
     <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->

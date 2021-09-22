@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="way_file" default="turtlebot_world_way2.csv"/>
+    <!--<arg name="way_file" default="house_way.csv"/>-->
+    <arg name="simulation" default="true"/>
+
+    <include file="$(find rumba_autocar)/launch/include/basicNavigation.launch">
+        <arg name="nav_mode" default="slam"/>
+        <arg name="move_base" default="false"/>
+        <arg name="gazebo" value="$(arg simulation)"/>
+        <!--<arg name="world" value="turtlebot3_house.world"/>-->
+        <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+        <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
+    </include>
+
+    <!--joystick-->
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+    <node name="joystickPS4_rumba" pkg="rumba_autocar" type="joystickPS4_rumba">
+        <remap from="cmd_vel" to="safety_limit/cmd_vel_in"/>
+    </node>
+
+    <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
+        <rosparam command="load" file="$(find rumba_autocar)/config/global_costmap_params.yaml" />
+    </node>
+
+    <!--safety function-->
+    <node pkg="rumba_autocar" name="laser2pc" type="laser2pc">
+        <remap from="scan" to="scan_filtered"/>
+    </node>
+    <node pkg="rumba_autocar" name="safety_limit" type="safety_limit" output="screen">
+        <param name="max_nn" value="100"/>
+        <param name="robot_radius" value="0.2"/>
+        <param name="x_max" value="3.0"/>
+        <param name="x_min" value="-1.0"/>
+        <param name="y_max" value="0.3"/>
+        <param name="y_min" value="-0.3"/>
+        <param name="loop_rate" value="50"/>
+        <param name="dt" value="0.15"/>
+        <param name="recovery_start_time" value="0.5"/>
+        <remap from="safety_limit/cmd_vel_out" to="cmd_vel"/>
+        <remap from="cloud" to="laser2pc/pc2"/>
+     </node>
+
+
+    <node name="astar_planning_node" pkg="rumba_autocar" type="astar_planning_node" output="screen">
+        <param name="base_link_frame_id" value="base_footprint"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="10"/>
+        <param name="heuristic_gain" value="1.0"/>
+        <param name="resolution" value="0.1"/>
+        <param name="costmapThreshold" value="50"/>
+        <param name="approximationNode" value="20"/>
+        <param name="approximationResolution" value="10"/>
+        <remap from="astar_plannnig_node/goal" to="move_base_simple/goal"/>
+        <remap from="astar_plannnig_node/costmap" to="costmap_node/my_costmap/costmap"/>
+    </node>
+
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/astar_demo.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>
