@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
                 cmd_vel.linear.x = 0;
                 cmd_vel.angular.z = constrain(diffAngle * 1.5, -max_angular_vel, max_angular_vel);
-                if(abs(diffAngle) < 1*M_PI/180){
+                if(abs(diffAngle) < 10*M_PI/180){
                     run_init = false;
                 }
             }

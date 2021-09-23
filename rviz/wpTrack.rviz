@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
+        - /String1
         - /MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 282
@@ -347,13 +348,13 @@ Visualization Manager:
       line width: 2
       text size: 24
       top: 170
-      width: 150
+      width: 220
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /lane_planner/marker_array
       Name: MarkerArray
       Namespaces:
-        {}
+        plannig_point: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -422,10 +423,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.144797682762146
+      Pitch: 1.4297974109649658
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.155414581298828
+      Yaw: 3.085413932800293
     Saved: ~
 Window Geometry:
   Displays:
@@ -443,7 +444,7 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1299
-  X: 67
+  X: 1987
   Y: 27
   modeSelect:
     collapsed: false

@@ -33,7 +33,7 @@
     </node>
 
     <node pkg="rumba_autocar" type="costmap_node" name="costmap_node">
-        <rosparam command="load" file="$(find rumba_autocar)/config/costmap_params.yaml" />
+        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params.yaml" />
     </node>
 
     <node name="astar_planning_node" pkg="rumba_autocar" type="astar_planning_node">
@@ -62,7 +62,7 @@
         <param name="loop_rate" value="30"/>
         <param name="maxVelocity" value="0.7"/>
         <param name="max_angular_vel" value="1.5"/>
-        <param name="maxCurvature" value="3"/>
+        <param name="maxCurvature" value="5"/>
         <remap from="pure_posePursuit/pose_in" to="lane_planner/pose_out"/>
     </node>
 
@@ -79,7 +79,7 @@
         <param name="y_min" value="-0.3"/>
         <param name="loop_rate" value="50"/>
         <param name="dt" value="0.1"/>
-        <param name="recovery_start_time" value="0.5"/>
+        <param name="recovery_start_time" value="0.3"/>
         <param name="dangerous_potential" value="false"/>
         <remap from="safety_limit/cmd_vel_in" to="pure_posePursuit/cmd_vel"/>
         <remap from="cloud" to="laser2pc/pc2"/>

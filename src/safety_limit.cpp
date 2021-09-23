@@ -26,15 +26,79 @@
 const std::string safety_stop = "safety_stop";
 const std::string recovery = "recovery";
 
-// publisher
-// typedef pcl::PointCloud<pcl::PointXYZ> FilteredPointCloud;
-pcl::PointCloud<pcl::PointXYZ>::Ptr gfiltered;
+class safety_limit
+{
+public:
+    safety_limit();
+private:
+    ros::NodeHandle nh;
 
-// ROS
-std_msgs::Float32 g_vel;//navigation stack の速度指令
+    // publisher
+    ros::Publisher cmd_pub;
+    ros::Publisher mode_pub;
+    // subscribe
+    ros::Subscriber cmd_sub;
+    ros::Subscriber pc2_sub;
+    ros::Subscriber cost_sub;
+
+    //function
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pass_through(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string iaxis, double imin, double imax);
+    void cmd_callback(const geometry_msgs::Twist& cmd_message);
+    void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2);
+    void cost_callback(const nav_msgs::OccupancyGrid& costmap_message);
+    int getCost(double x, double y);
+    bool check_around_obstacle(const geometry_msgs::Pose& nowPos);
+
+    double g_xmin, g_xmax, g_ymin, g_ymax;
+    double robotRadius;
+    int g_max_nn; //何点見つかったら探索を打ち切るか。0にすると打ち切らない
+    int rate;
+    double dt;
+    double recovery_start_time;
+
+    double lowMode_speedRatio;
+    bool dangerous_potential;
+    std::string map_id, base_link_id;
+
+    int stop_count;
+    geometry_msgs::Twist cmd_vel_limit;
+    std_msgs::String mode;
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr gfiltered;
+    geometry_msgs::Twist cmd_vel;
+    nav_msgs::OccupancyGrid costmap;
+};
+
+safety_limit::safety_limit() :  stop_count(0)
+{
+    //publisher
+    cmd_pub = nh.advertise<geometry_msgs::Twist>("safety_limit/cmd_vel_out", 10);
+    mode_pub = nh.advertise<std_msgs::String>("safety_limit/mode", 10);
+    // subscriber
+    cmd_sub = nh.subscribe("safety_limit/cmd_vel_in", 10, &safety_limit::cmd_callback, this);
+    pc2_sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, &safety_limit::callback_knn, this);
+    cost_sub = nh.subscribe("safety_limit/costmap", 10, &safety_limit::cost_callback, this);
+
+    //set parameter from ros command
+    ros::NodeHandle pnh("~");
+    pnh.param<double>("x_max", g_xmax, 5.0);
+    pnh.param<double>("x_min", g_xmin, -0.5);
+    pnh.param<double>("y_max", g_ymax, 0.4);
+    pnh.param<double>("y_min", g_ymin, -0.4);
+    pnh.param<int>("max_nn", g_max_nn, 100);
+    pnh.param<double>("robot_radius", robotRadius, 0.5);
+    pnh.param<int>("loop_rate", rate, 50);
+    pnh.param<double>("dt", dt, 0.3);
+    pnh.param<double>("recovery_start_time", recovery_start_time, 2.0);
+    pnh.param<double>("lowMode_speedRatio", lowMode_speedRatio, 0.5);
+    pnh.param<bool>("dangerous_potential", dangerous_potential, true);
+    pnh.param<std::string>("map_frame_id", map_id, "map");
+    pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
+
+}
 
 // pass through filter
-pcl::PointCloud<pcl::PointXYZ>::Ptr pass_through(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string iaxis, double imin, double imax)
+pcl::PointCloud<pcl::PointXYZ>::Ptr safety_limit::pass_through(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string iaxis, double imin, double imax)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PassThrough<pcl::PointXYZ> pass;
@@ -47,33 +111,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr pass_through(pcl::PointCloud<pcl::PointXYZ>:
     return cloud_filtered;
 }
 
-geometry_msgs::Twist cmd_vel;
-void cmd_callback(const geometry_msgs::Twist& cmd_message)
+void safety_limit::cmd_callback(const geometry_msgs::Twist& cmd_message)
 {
     cmd_vel = cmd_message;
 }
 
-
-double g_xmin, g_xmax;
-double g_ymin, g_ymax;
-double robotRadius;
-int g_max_nn; //何点見つかったら探索を打ち切るか。0にすると打ち切らない
-int rate;
-double dt;
-double recovery_start_time;
-
-int stop_count = 0;
-geometry_msgs::Twist cmd_vel_limit;
-std_msgs::String mode;
-
 // callback
-void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
-	g_vel.data = g_xmax;
-    //
+void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_nan (new pcl::PointCloud<pcl::PointXYZ>); // NaN値あり
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // NaN値なし
 
-    //
     pcl::fromROSMsg(*pc2, *cloud_nan);
 
     // NaN値が入ってるといろいろ面倒なので除去
@@ -116,7 +163,6 @@ void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
 
         // error handling
         if(k_indices.size() == 0) {
-            g_vel.data = g_xmax;
             return;
         }
 
@@ -151,30 +197,38 @@ void callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
                     mode.data = recovery;
                     stop_count = 0;
                 }
+
+                cmd_pub.publish(cmd_vel_limit);
+                mode_pub.publish(mode);
                 return;
             }
         }
         //衝突判定に引っかからなければcountを初期化
         stop_count = 0;
 
-        //**Accepted! Get average x axis distance, which is the front distances of each points.
-        /*float tsum = 0.0;
-        for(int i=0; i<k_indices.size();i++) tsum += cloud->points[k_indices[i]].x;
-        float tave = tsum / k_indices.size(); // get average
-        g_vel.data = tave;
-        //ROS_INFO("Ave. distance of %i NN in rad. %lf \t :%lf", max_nn, radius, tave);
-        */
+        //potential check
+        static tf_position nowPosition(map_id, base_link_id, rate);
+        if(costmap.data.size()>0){
+            if(dangerous_potential){
+                if(check_around_obstacle(nowPosition.getPose())){
+                    cmd_vel_limit.linear.x *= lowMode_speedRatio;
+                    cmd_vel_limit.angular.z *= lowMode_speedRatio;
+                }
+            }
+        }
+
+        cmd_pub.publish(cmd_vel_limit);
+        mode_pub.publish(mode);
 
     }
 }
 
-nav_msgs::OccupancyGrid costmap;
-void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
+void safety_limit::cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 {
     costmap = costmap_message;
 }
 
-int getCost(double x, double y)
+int safety_limit::getCost(double x, double y)
 {
     //x = costmap.info.origin.position.x + x_grid*costmap.info.resolution
     int x_grid = abs((x - costmap.info.origin.position.x)/costmap.info.resolution);
@@ -189,7 +243,7 @@ int getCost(double x, double y)
     }
 }
 
-bool check_around_obstacle(const geometry_msgs::Pose& nowPos)
+bool safety_limit::check_around_obstacle(const geometry_msgs::Pose& nowPos)
 {
     if(getCost(nowPos.position.x, nowPos.position.y)>10){
         return true;
@@ -201,61 +255,9 @@ bool check_around_obstacle(const geometry_msgs::Pose& nowPos)
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "safety_limit");
-    ros::NodeHandle nh;
-    ros::NodeHandle pnh("~");
+    safety_limit sl;;
 
-    // publisher
-    ros::Publisher pub = nh.advertise<pcl::PointCloud<pcl::PointXYZ> >("cloud", 1);
-    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("safety_limit/cmd_vel_out", 10);
-    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("safety_limit/mode", 10);
-    // subscribe
-    ros::Subscriber cmd_sub = nh.subscribe("safety_limit/cmd_vel_in", 10, cmd_callback);
-    ros::Subscriber pc2_sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, callback_knn);
-    ros::Subscriber cost_sub = nh.subscribe("safety_limit/costmap", 10, cost_callback);
-
-    //** set parameter from ros command
-    double lowMode_speedRatio;
-    pnh.param<double>("x_max", g_xmax, 5.0);
-    pnh.param<double>("x_min", g_xmin, -0.5);
-    pnh.param<double>("y_max", g_ymax, 0.4);
-    pnh.param<double>("y_min", g_ymin, -0.4);
-    pnh.param<int>("max_nn", g_max_nn, 100);
-    pnh.param<double>("robot_radius", robotRadius, 0.5);
-    pnh.param<int>("loop_rate", rate, 50);
-    pnh.param<double>("dt", dt, 0.3);
-    pnh.param<double>("recovery_start_time", recovery_start_time, 2.0);
-    pnh.param<double>("lowMode_speedRatio", lowMode_speedRatio, 0.5);
-    bool dangerous_potential;
-    pnh.param<bool>("dangerous_potential", dangerous_potential, true);
-    std::string map_id, base_link_id;
-    pnh.param<std::string>("map_frame_id", map_id, "map");
-    pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
-
-    tf_position nowPosition(map_id, base_link_id, rate);
-
-    ros::Rate loop_rate(rate);
-    while(ros::ok())
-    {
-        geometry_msgs::Twist cmd_vel_out;
-
-        cmd_vel_out = cmd_vel_limit;
-        if(costmap.data.size()>0){
-            if(dangerous_potential){
-                if(check_around_obstacle(nowPosition.getPose())){
-                    cmd_vel_out.linear.x = cmd_vel_limit.linear.x * lowMode_speedRatio;
-                    cmd_vel_out.angular.z = cmd_vel_limit.angular.z * lowMode_speedRatio;
-                }
-            }
-            
-        }
-
-        //pub.publish(gfiltered);
-        cmd_pub.publish(cmd_vel_out);
-        mode_pub.publish(mode);
-
-        ros::spinOnce ();
-        loop_rate.sleep();
-    }
-
+    ros::spin();
     return 0;
+
 }
