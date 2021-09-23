@@ -195,7 +195,9 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
                 if(stop_count > (int)(recovery_start_time*rate)){
                     ROS_INFO("robot recovery behaviour");
                     mode.data = recovery;
-                    stop_count = 0;
+                    if(stop_count > (int)((recovery_start_time+dt)*rate)){
+                        stop_count = 0;
+                    }
                 }
 
                 cmd_pub.publish(cmd_vel_limit);
