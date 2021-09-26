@@ -1,6 +1,9 @@
 # rumba_autocar
 navigation practice using roomba
 
+## dependence package
+[AutonamyLab/create_robot](https://github.com/AutonomyLab/create_robot)
+
 ## Installation
 ```
 cd catkin_ws/src
