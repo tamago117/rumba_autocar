@@ -7,6 +7,8 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include "rumba_autocar/tf_position.h"
+#include "rumba_autocar/robot_status.h"
+
 
 geometry_msgs::Twist cmd_vel;
 void cmd_callback(const geometry_msgs::Twist& cmd_message)
@@ -20,7 +22,6 @@ void recovery_cmd_callback(const geometry_msgs::Twist& cmd_message)
     recovery_cmd_vel = cmd_message;
 }
 
-std::string stop = "stop";
 std_msgs::String mode;
 void mode_callback(const std_msgs::String& mode_message)
 {
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(rate);
 
     tf_position nowPosition(map_id, base_link_id, rate);
-    mode.data = stop;
+    mode.data = robot_status_str(robot_status::stop);
 
     bool run_init = true;
     bool recovery_init = false;
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
     {
         if(run_init){
             //run mode
-            if(mode.data == "run"){
+            if(mode.data == robot_status_str(robot_status::run)){
                 double dx = targetPose.position.x - nowPosition.getPose().position.x;
                 double dy = targetPose.position.y - nowPosition.getPose().position.y;
                 double targetAngle = atan2(dy, dx);
@@ -132,40 +133,40 @@ int main(int argc, char** argv)
             }
         }
         //stop mode
-        if(mode.data == "stop"){
+        if(mode.data == robot_status_str(robot_status::stop)){
             cmd_vel.linear.x = 0;
             cmd_vel.angular.z = 0;
             run_init = true;
         }
         //angle adjust
-        if(mode.data == "adjust"){
+        if(mode.data == robot_status_str(robot_status::angleAdjust)){
             double diffAngle = arrangeAngle(quat2yaw(targetWpPose.pose.orientation) - nowPosition.getYaw());
 
             cmd_vel.linear.x = 0;
             cmd_vel.angular.z = constrain(diffAngle * 1.5, -max_angular_vel, max_angular_vel);
             if(abs(diffAngle) < 1*M_PI/180){
-                mode.data = "stop";
+                mode.data = robot_status_str(robot_status::stop);
             }
         }
-        if(recovery_mode.data == "safety_stop"){
-            mode.data = "safety_stop";
+        if(recovery_mode.data == robot_status_str(robot_status::safety_stop)){
+            mode.data = robot_status_str(robot_status::safety_stop);
         }
-        if(recovery_mode.data == "run" && mode.data == "safety_stop"){
-            mode.data = "run";
+        if(recovery_mode.data == robot_status_str(robot_status::run) && mode.data == robot_status_str(robot_status::safety_stop)){
+            mode.data = robot_status_str(robot_status::run);
         }
 
         //recovery mode
-        if(recovery_mode.data == "recovery"){
+        if(recovery_mode.data == robot_status_str(robot_status::recovery)){
             recovery_init = true;
-            mode.data = "recovery";
+            mode.data = robot_status_str(robot_status::recovery);
             cmd_vel = recovery_cmd_vel;
         }
         if(recovery_init){
-            if(!(recovery_mode.data == "recovery")){
+            if(!(recovery_mode.data == robot_status_str(robot_status::recovery))){
                 recovery_init = false;
 
                 run_init = true;
-                mode.data = "run";
+                mode.data = robot_status_str(robot_status::run);
             }
         }
 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
@@ -30,6 +31,12 @@ geometry_msgs::Twist robot_now_vel;
 void robot_vel_callback(const geometry_msgs::Twist& robot_vel_message)
 {
     robot_now_vel = robot_vel_message;
+}
+
+nav_msgs::Odometry odom;
+void odom_callback(const nav_msgs::Odometry& odom_message)
+{
+    odom = odom_message;
 }
 
 std_msgs::ColorRGBA set_color(double r, double g, double b, double a)
@@ -164,7 +171,7 @@ int main(int argc, char** argv)
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
     ros::Subscriber cost_sub = nh.subscribe("lane_planner/costmap", 10, cost_callback);
-    ros::Subscriber robot_vel_sub = nh.subscribe("robot_now_vel", 10, robot_vel_callback);
+    ros::Subscriber odom_sub = nh.subscribe("odom", 10, odom_callback);
     ros::Publisher pose_pub = nh.advertise<geometry_msgs::Pose>("lane_planner/pose_out", 10);
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("lane_planner/marker_array", 10);
 
@@ -176,7 +183,7 @@ int main(int argc, char** argv)
     {
         if(path.poses.size() > 0){
             //change targer pose interval following to robot velocity
-            double target_interval = ((1-distance_rate)*disTarget_maxVel/maxVel)*abs(robot_now_vel.linear.x) + distance_rate*disTarget_maxVel;
+            double target_interval = ((1-distance_rate)*disTarget_maxVel/maxVel)*abs(odom.twist.twist.linear.x) + distance_rate*disTarget_maxVel;
             //updata target way point to let distance be target_deviation
             int targetPose = 0;
             while(!(poseStampDistance(path.poses[targetPose], nowPosition.getPoseStamped()) >= target_interval))

@@ -2,9 +2,7 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
 #include <string>
-
-const std::string recovery = "recovery";
-const std::string run = "run";
+#include "rumba_autocar/robot_status.h"
 
 std_msgs::String mode;
 void mode_callback(const std_msgs::String& mode_message)
@@ -35,13 +33,12 @@ int main(int argc, char** argv)
     ros::Time preT = ros::Time::now();
     while(ros::ok())
     {
-        if(mode_out.data == recovery){
-            mode_out.data = recovery;
+        if(mode_out.data == robot_status_str(robot_status::recovery)){
             cmd_vel.linear.x = linear_vel;
             cmd_vel.angular.z = angular_vel;
 
             if((ros::Time::now() - preT) >= ros::Duration(duration)){
-                mode_out.data = run;
+                mode_out.data = robot_status_str(robot_status::run);
             }
 
         }else{

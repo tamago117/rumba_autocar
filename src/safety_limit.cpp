@@ -22,9 +22,7 @@
 #include <string>
 #include <limits>
 #include "rumba_autocar/tf_position.h"
-
-const std::string safety_stop = "safety_stop";
-const std::string recovery = "recovery";
+#include "rumba_autocar/robot_status.h"
 
 class safety_limit
 {
@@ -176,7 +174,7 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
         double next_robot_x = cmd_vel.linear.x * cos(next_robot_yaw) * dt;
         double next_robot_y = cmd_vel.linear.y * sin(next_robot_yaw) * dt;
 
-        mode.data = "run";
+        mode.data = robot_status_str(robot_status::run);
         for(int i=0; i<k_indices.size(); i++){
             double point_x = cloud->points[k_indices[i]].x;
             double point_y = cloud->points[k_indices[i]].y;
@@ -188,13 +186,13 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
                 cmd_vel_limit.angular.z = 0;
 
                 ROS_INFO("robot safety stop");
-                mode.data = safety_stop;
+                mode.data = robot_status_str(robot_status::safety_stop);
 
                 //一定のカウントでrecoveryに入る
                 stop_count++;
                 if(stop_count > (int)(recovery_start_time*rate)){
                     ROS_INFO("robot recovery behaviour");
-                    mode.data = recovery;
+                    mode.data = robot_status_str(robot_status::recovery);;
                     if(stop_count > (int)((recovery_start_time+dt)*rate)){
                         stop_count = 0;
                     }
