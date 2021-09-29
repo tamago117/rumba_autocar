@@ -20,7 +20,7 @@ std::string robot_status_str(robot_status status)
         case(robot_status::angleAdjust):
             return "angleAdjust";
         case(robot_status::safety_stop):
-            return "safetyStop";
+            return "safety_stop";
         case(robot_status::recovery):
             return "recovery";
         default:

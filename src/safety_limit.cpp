@@ -34,6 +34,8 @@ private:
     // publisher
     ros::Publisher cmd_pub;
     ros::Publisher mode_pub;
+    ros::Publisher linear_vel_pub;
+    ros::Publisher angular_vel_pub;
     // subscribe
     ros::Subscriber cmd_sub;
     ros::Subscriber pc2_sub;
@@ -46,17 +48,19 @@ private:
     void cost_callback(const nav_msgs::OccupancyGrid& costmap_message);
     int getCost(double x, double y);
     bool check_around_obstacle(const geometry_msgs::Pose& nowPos);
+    template<class T> T constrain(T num, T minVal, T maxVal);
 
     double g_xmin, g_xmax, g_ymin, g_ymax;
     double robotRadius;
     int g_max_nn; //何点見つかったら探索を打ち切るか。0にすると打ち切らない
     int rate;
-    double dt;
+    double min_dt, dt;
     double recovery_start_time;
 
     double lowMode_speedRatio;
     bool dangerous_potential;
     std::string map_id, base_link_id;
+    double max_linear_vel, max_angular_vel;
 
     int stop_count;
     geometry_msgs::Twist cmd_vel_limit;
@@ -64,6 +68,7 @@ private:
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr gfiltered;
     geometry_msgs::Twist cmd_vel;
+    std_msgs::Float32 linear_vel, angular_vel;
     nav_msgs::OccupancyGrid costmap;
 };
 
@@ -72,6 +77,8 @@ safety_limit::safety_limit() :  stop_count(0)
     //publisher
     cmd_pub = nh.advertise<geometry_msgs::Twist>("safety_limit/cmd_vel_out", 10);
     mode_pub = nh.advertise<std_msgs::String>("safety_limit/mode", 10);
+    linear_vel_pub = nh.advertise<std_msgs::Float32>("linear_vel", 10);
+    angular_vel_pub = nh.advertise<std_msgs::Float32>("angular_vel", 10);
     // subscriber
     cmd_sub = nh.subscribe("safety_limit/cmd_vel_in", 10, &safety_limit::cmd_callback, this);
     pc2_sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, &safety_limit::callback_knn, this);
@@ -86,7 +93,9 @@ safety_limit::safety_limit() :  stop_count(0)
     pnh.param<int>("max_nn", g_max_nn, 100);
     pnh.param<double>("robot_radius", robotRadius, 0.5);
     pnh.param<int>("loop_rate", rate, 50);
-    pnh.param<double>("dt", dt, 0.3);
+    pnh.param<double>("max_linear_vel", max_linear_vel, 1.0);
+    pnh.param<double>("max_angular_vel", max_angular_vel, 0.5);
+    pnh.param<double>("dt", min_dt, 0.3);
     pnh.param<double>("recovery_start_time", recovery_start_time, 2.0);
     pnh.param<double>("lowMode_speedRatio", lowMode_speedRatio, 0.5);
     pnh.param<bool>("dangerous_potential", dangerous_potential, true);
@@ -170,6 +179,13 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
         }
         ROS_ASSERT(max_nn > 1);
 
+        //safety時それ以上ぶつからないように＆抜け出しやすいように予測時間を大げさにする
+        if(mode.data == robot_status_str(robot_status::safety_stop)){
+            dt = 6*min_dt;
+        }else{
+            dt = min_dt;
+        }
+        
         double next_robot_yaw = cmd_vel.angular.z * dt;
         double next_robot_x = cmd_vel.linear.x * cos(next_robot_yaw) * dt;
         double next_robot_y = cmd_vel.linear.y * sin(next_robot_yaw) * dt;
@@ -192,13 +208,18 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
                 stop_count++;
                 if(stop_count > (int)(recovery_start_time*rate)){
                     ROS_INFO("robot recovery behaviour");
-                    mode.data = robot_status_str(robot_status::recovery);;
-                    if(stop_count > (int)((recovery_start_time+dt)*rate)){
+                    mode.data = robot_status_str(robot_status::recovery);
+                    if(stop_count > (int)((recovery_start_time+min_dt)*rate)){
                         stop_count = 0;
                     }
                 }
 
+                linear_vel.data = cmd_vel_limit.linear.x;
+                angular_vel.data = cmd_vel_limit.angular.z;
+
                 cmd_pub.publish(cmd_vel_limit);
+                linear_vel_pub.publish(linear_vel);
+                angular_vel_pub.publish(angular_vel);
                 mode_pub.publish(mode);
                 return;
             }
@@ -217,7 +238,16 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
             }
         }
 
+        cmd_vel_limit.linear.x = constrain(cmd_vel_limit.linear.x, -max_linear_vel, max_linear_vel);
+        cmd_vel_limit.angular.z = constrain(cmd_vel_limit.angular.z, -max_angular_vel, max_angular_vel);
+
+        linear_vel.data = cmd_vel_limit.linear.x;
+        angular_vel.data = cmd_vel_limit.angular.z;
+
+
         cmd_pub.publish(cmd_vel_limit);
+        linear_vel_pub.publish(linear_vel);
+        angular_vel_pub.publish(angular_vel);
         mode_pub.publish(mode);
 
     }
@@ -250,6 +280,18 @@ bool safety_limit::check_around_obstacle(const geometry_msgs::Pose& nowPos)
     }else{
         return false;
     }
+}
+
+template<class T> T safety_limit::constrain(T num, T minVal, T maxVal)
+{
+    if(num > maxVal){
+        num = maxVal;
+    }
+    if(num < minVal){
+        num = minVal;
+    }
+
+    return num;
 }
 
 int main(int argc, char** argv)

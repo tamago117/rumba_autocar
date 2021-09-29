@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     pnh.param<double>("duration", duration, 0.5);
 
     ros::Subscriber mode_sub = nh.subscribe("safety_limit/mode", 10, mode_callback);
-    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("simple_recovery/cmd_vel", 10);
-    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("simple_recovery/mode", 10);
+    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("recovery/cmd_vel", 10);
+    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("recovery/mode", 10);
 
     ros::Rate loop_rate(10);
 

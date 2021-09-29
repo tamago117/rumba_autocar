@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Path.h>
@@ -44,6 +45,19 @@ void path_callback(const nav_msgs::Path path_message)
     path = path_message;
 }
 
+bool isSuccessPlanning;
+int failedPlanCount = 0;
+void successPlan_callback(const std_msgs::Bool successPlan_message)
+{
+    if(!(isSuccessPlanning)){
+        failedPlanCount++;
+    }else{
+        failedPlanCount = 0;
+    }
+
+    isSuccessPlanning = successPlan_message.data;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "wpControll");
@@ -64,6 +78,7 @@ int main(int argc, char** argv)
     tf_position nowPosition(map_id, base_link_id, rate);
 
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
+    ros::Subscriber successPlan_sub = nh.subscribe("successPlan", 10, successPlan_callback);
     ros::Publisher tarWp_pub = nh.advertise<std_msgs::Int32>("targetWp", 10);
     ros::Publisher tarPos_pub = nh.advertise<geometry_msgs::PoseStamped>("targetWpPose", 10);
     ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode_select/mode", 10);
@@ -96,6 +111,14 @@ int main(int argc, char** argv)
                 }
             }
 
+            if(failedPlanCount>5){
+                if(!(targetWp.data >= (path.poses.size()-1))){
+                    targetWp.data++;
+                    failedPlanCount = 0;
+                }
+            }
+
+            //angle adjust at specific wp
             if(targetWp.data >= (path.poses.size()-1)){
                 //distance
                 if(!isReach){
@@ -105,6 +128,7 @@ int main(int argc, char** argv)
                     }
                 }
             }
+
 
             tarPos.header.frame_id = path.header.frame_id;
             tarPos.header.stamp = ros::Time::now();

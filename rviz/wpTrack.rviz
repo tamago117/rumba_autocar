@@ -7,8 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
-        - /String1
-        - /MarkerArray1
+        - /yawVelocity1
       Splitter Ratio: 0.5
     Tree Height: 282
   - Class: rviz/Selection
@@ -293,7 +292,7 @@ Visualization Manager:
     - Class: jsk_rviz_plugin/PieChart
       Enabled: true
       Name: velocity
-      Topic: /dwa_path_plan/vel_rviz
+      Topic: /linear_vel
       Value: true
       auto color change: false
       background color: 0; 0; 0
@@ -313,7 +312,7 @@ Visualization Manager:
     - Class: jsk_rviz_plugin/PieChart
       Enabled: true
       Name: yawVelocity
-      Topic: /dwa_path_plan/yawVel_rviz
+      Topic: /angular_vel
       Value: true
       auto color change: false
       background color: 0; 0; 0

@@ -70,18 +70,6 @@ double arrangeAngle(double angle)
     return angle;
 }
 
-template<class T> T constrain(T num, T minVal, T maxVal)
-{
-    if(num > maxVal){
-        num = maxVal;
-    }
-    if(num < minVal){
-        num = minVal;
-    }
-
-    return num;
-}
-
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "twist_maneger");
@@ -91,14 +79,11 @@ int main(int argc, char** argv)
     std::string map_id, base_link_id;
     pnh.param<std::string>("map_frame_id", map_id, "map");
     pnh.param<std::string>("base_link_frame_id", base_link_id, "base_link");
-    double rate, max_angular_vel;
+    double rate;
     pnh.param<double>("loop_rate", rate, 100);
-    pnh.param<double>("max_angular_vel", max_angular_vel, 2);
 
     ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("twist_maneger/cmd_vel", 10);
     ros::Publisher mode_pub = nh.advertise<std_msgs::String>("mode", 10);
-    ros::Publisher vel_rviz_pub = nh.advertise<std_msgs::Float32>("dwa_path_plan/vel_rviz", 10);
-    ros::Publisher yawVel_rviz_pub = nh.advertise<std_msgs::Float32>("dwa_path_plan/yawVel_rviz", 10);
     ros::Subscriber cmd_sub = nh.subscribe("cmd_vel", 10 , cmd_callback);
     ros::Subscriber recovery_cmd_sub = nh.subscribe("recovery/cmd_vel", 10, recovery_cmd_callback);
     ros::Subscriber mode_sub = nh.subscribe("mode_select/mode", 10 , mode_callback);
@@ -126,7 +111,7 @@ int main(int argc, char** argv)
                 double diffAngle = arrangeAngle(targetAngle - nowPosition.getYaw());
 
                 cmd_vel.linear.x = 0;
-                cmd_vel.angular.z = constrain(diffAngle * 1.5, -max_angular_vel, max_angular_vel);
+                cmd_vel.angular.z = diffAngle * 1.5;
                 if(abs(diffAngle) < 10*M_PI/180){
                     run_init = false;
                 }
@@ -143,14 +128,17 @@ int main(int argc, char** argv)
             double diffAngle = arrangeAngle(quat2yaw(targetWpPose.pose.orientation) - nowPosition.getYaw());
 
             cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = constrain(diffAngle * 1.5, -max_angular_vel, max_angular_vel);
+            cmd_vel.angular.z = diffAngle * 1.5;
             if(abs(diffAngle) < 1*M_PI/180){
                 mode.data = robot_status_str(robot_status::stop);
             }
         }
+        //safety stop
         if(recovery_mode.data == robot_status_str(robot_status::safety_stop)){
             mode.data = robot_status_str(robot_status::safety_stop);
+            cmd_vel = recovery_cmd_vel;
         }
+        //end safety stop
         if(recovery_mode.data == robot_status_str(robot_status::run) && mode.data == robot_status_str(robot_status::safety_stop)){
             mode.data = robot_status_str(robot_status::run);
         }
@@ -161,6 +149,7 @@ int main(int argc, char** argv)
             mode.data = robot_status_str(robot_status::recovery);
             cmd_vel = recovery_cmd_vel;
         }
+        //end recovery
         if(recovery_init){
             if(!(recovery_mode.data == robot_status_str(robot_status::recovery))){
                 recovery_init = false;
@@ -174,11 +163,6 @@ int main(int argc, char** argv)
         cmd_vel_pub.publish(cmd_vel);
         mode_pub.publish(mode);
 
-        vel.data = cmd_vel.linear.x;
-        yawVel.data = cmd_vel.angular.z;
-        vel_rviz_pub.publish(vel);
-        yawVel_rviz_pub.publish(yawVel);
-        
 
         ros::spinOnce();
         loop_rate.sleep();

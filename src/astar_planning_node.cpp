@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
@@ -70,10 +71,13 @@ int main(int argc, char** argv)
     ros::Subscriber goalPose_sub = nh.subscribe("astar_plannnig_node/goal", 50, poseStamp_callback);
     ros::Subscriber cost_sub = nh.subscribe("astar_plannnig_node/costmap", 10, cost_callback);
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("astar_plannnig_node/path", 10);
+    ros::Publisher bool_pub = nh.advertise<std_msgs::Bool>("astar_planning_node/successPlan", 10);
 
     ctr::a_star star(resolution, costmapThreshold, heuristic_gain);
     bezier_curve bezier;
     tf_position nowPosition(map_id, base_link_id, rate);
+
+    std_msgs::Bool isSuccessPlanning;
 
     ros::Rate loop_rate(rate);
     while(ros::ok())
@@ -81,7 +85,11 @@ int main(int argc, char** argv)
         if(costmap.data.size()>0){
 
             std::vector<double> path_x, path_y;
-            star.planning(path_x, path_y, nowPosition.getPose(), goalPose.pose, costmap);
+            if(star.planning(path_x, path_y, nowPosition.getPose(), goalPose.pose, costmap)){
+                isSuccessPlanning.data = true;
+            }else{
+                isSuccessPlanning.data = false;
+            }
 
             //approximate bezier curve
             int node;
@@ -163,6 +171,7 @@ int main(int argc, char** argv)
             plan_path.header.stamp = ros::Time::now();
 
             path_pub.publish(plan_path);
+            bool_pub.publish(isSuccessPlanning);
         }
 
         ros::spinOnce();

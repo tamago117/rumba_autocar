@@ -67,8 +67,8 @@ int main(int argc, char** argv)
     ros::Subscriber mode_sub = nh.subscribe("safety_limit/mode", 10, mode_callback);
     ros::Subscriber now_wp_sub = nh.subscribe("waypoint/now", 50, now_wp_callback);
     ros::Subscriber path_sub = nh.subscribe("path", 50, path_callback);
-    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("wpBack_recovery/cmd_vel", 10);
-    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("wpBack_recovery/mode", 10);
+    ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("recovery/cmd_vel", 10);
+    ros::Publisher mode_pub = nh.advertise<std_msgs::String>("recovery/mode", 10);
 
     ros::Rate loop_rate(10);
 
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
                 if((ros::Time::now() - preT) >= ros::Duration(duration)){
                     mode_out.data = robot_status_str(robot_status::run);
-                }else if(poseStampDistance(path.poses[recoveryWpNum], nowPosition.getPoseStamped()) >= fin_recovery_deviation){
+                }else if(poseStampDistance(path.poses[recoveryWpNum], nowPosition.getPoseStamped()) <= fin_recovery_deviation){
                     mode_out.data = robot_status_str(robot_status::run);
                 }
 
