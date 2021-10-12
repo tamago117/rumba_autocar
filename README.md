@@ -2,7 +2,7 @@
 navigation practice using roomba
 
 ## dependence package
-[AutonamyLab/create_robot](https://github.com/AutonomyLab/create_robot)
+[AutonamyLab/create_robot](https://github.com/AutonomyLab/create_robot)  
 [tamago117/control_panel_plugin](https://github.com/tamago117/control_panel_plugin)
 
 ## Installation
