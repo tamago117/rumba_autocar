@@ -45,16 +45,10 @@ void path_callback(const nav_msgs::Path path_message)
     path = path_message;
 }
 
-bool isSuccessPlanning;
+bool isSuccessPlanning = true;
 int failedPlanCount = 0;
 void successPlan_callback(const std_msgs::Bool successPlan_message)
 {
-    if(!(isSuccessPlanning)){
-        failedPlanCount++;
-    }else{
-        failedPlanCount = 0;
-    }
-
     isSuccessPlanning = successPlan_message.data;
 }
 
@@ -111,18 +105,19 @@ int main(int argc, char** argv)
                 }
             }
 
-            if(failedPlanCount>5){
-                if(!(targetWp.data >= (path.poses.size()-1))){
-                    targetWp.data++;
-                    failedPlanCount = 0;
-                }
+            //if planning fail, increase the target deviation
+            double fin_tar_deviation_;
+            if(isSuccessPlanning){
+                fin_tar_deviation_ = fin_tar_deviation;
+            }else{
+                fin_tar_deviation_ = 2 * fin_tar_deviation;
             }
 
             //angle adjust at specific wp
             if(targetWp.data >= (path.poses.size()-1)){
                 //distance
                 if(!isReach){
-                    if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= fin_tar_deviation){
+                    if(poseStampDistance(path.poses[targetWp.data], nowPosition.getPoseStamped()) <= fin_tar_deviation_){
                         //isReach = true;
                         mode_pub.publish(mode);
                     }

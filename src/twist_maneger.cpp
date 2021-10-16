@@ -136,7 +136,6 @@ int main(int argc, char** argv)
         //safety stop
         if(recovery_mode.data == robot_status_str(robot_status::safety_stop)){
             mode.data = robot_status_str(robot_status::safety_stop);
-            cmd_vel = recovery_cmd_vel;
         }
         //end safety stop
         if(recovery_mode.data == robot_status_str(robot_status::run) && mode.data == robot_status_str(robot_status::safety_stop)){

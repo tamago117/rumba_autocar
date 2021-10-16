@@ -3,6 +3,7 @@ map_frame_id : map
 loop_rate : 20
 heuristic_gain : 1.0
 resolution : 0.05
+replanning_radius : 0.5
 costmapThreshold : 50
 approximationNode : 20
 approximationResolution : 10

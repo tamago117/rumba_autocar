@@ -43,8 +43,6 @@ int main(int argc, char** argv)
 
         }else{
             mode_out = mode;
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0;
 
             preT = ros::Time::now();
         }

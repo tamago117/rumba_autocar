@@ -27,12 +27,6 @@ void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 
 }
 
-geometry_msgs::Twist robot_now_vel;
-void robot_vel_callback(const geometry_msgs::Twist& robot_vel_message)
-{
-    robot_now_vel = robot_vel_message;
-}
-
 nav_msgs::Odometry odom;
 void odom_callback(const nav_msgs::Odometry& odom_message)
 {
@@ -185,7 +179,7 @@ int main(int argc, char** argv)
             //change targer pose interval following to robot velocity
             double target_interval = ((1-distance_rate)*disTarget_maxVel/maxVel)*abs(odom.twist.twist.linear.x) + distance_rate*disTarget_maxVel;
             //updata target way point to let distance be target_deviation
-            int targetPose = 0;
+            int targetPose = 1;
             while(!(poseStampDistance(path.poses[targetPose], nowPosition.getPoseStamped()) >= target_interval))
             {
                 // path end point
@@ -268,11 +262,11 @@ int main(int argc, char** argv)
                 geometry_msgs::Point linear_start;
                 linear_start.x = targetPoint[i][0];
                 linear_start.y = targetPoint[i][1];
-                linear_start.z = 0.1;
+                linear_start.z = path.poses[targetPose].pose.position.z + 0.1;
                 geometry_msgs::Point linear_end;
                 linear_end.x = 0.2 * markerSize * cos(targetPoint[i][2]) + targetPoint[i][0];
                 linear_end.y = 0.2 * markerSize * sin(targetPoint[i][2]) + targetPoint[i][1];
-                linear_end.z = 0.1;
+                linear_end.z = path.poses[targetPose].pose.position.z + 0.1;
 
 
                 marker_array.markers[i].header.frame_id = map_id;
@@ -300,7 +294,7 @@ int main(int argc, char** argv)
             geometry_msgs::Pose pose;
             pose.position.x = targetPoint[bestPathNum][0];
             pose.position.y = targetPoint[bestPathNum][1];
-            pose.position.z = 0;
+            pose.position.z = path.poses[targetPose].pose.position.z;
             pose.orientation = path.poses[targetPose].pose.orientation;
 
             pose_pub.publish(pose);

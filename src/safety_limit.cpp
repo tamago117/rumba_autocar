@@ -19,6 +19,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
+#include <visualization_msgs/Marker.h>
 #include <string>
 #include <limits>
 #include "rumba_autocar/tf_position.h"
@@ -36,6 +37,7 @@ private:
     ros::Publisher mode_pub;
     ros::Publisher linear_vel_pub;
     ros::Publisher angular_vel_pub;
+    ros::Publisher marker_pub;
     // subscribe
     ros::Subscriber cmd_sub;
     ros::Subscriber pc2_sub;
@@ -79,6 +81,7 @@ safety_limit::safety_limit() :  stop_count(0)
     mode_pub = nh.advertise<std_msgs::String>("safety_limit/mode", 10);
     linear_vel_pub = nh.advertise<std_msgs::Float32>("linear_vel", 10);
     angular_vel_pub = nh.advertise<std_msgs::Float32>("angular_vel", 10);
+    marker_pub = nh.advertise<visualization_msgs::Marker>("safety_limit/next_robot_position", 1);
     // subscriber
     cmd_sub = nh.subscribe("safety_limit/cmd_vel_in", 10, &safety_limit::cmd_callback, this);
     pc2_sub = nh.subscribe<sensor_msgs::PointCloud2>("laser2pc/pc2", 1, &safety_limit::callback_knn, this);
@@ -181,16 +184,44 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
 
         //safety時それ以上ぶつからないように＆抜け出しやすいように予測時間を大げさにする
         if(mode.data == robot_status_str(robot_status::safety_stop)){
-            dt = 6*min_dt;
+            if(6*min_dt>1.0){
+                dt = 1.0;	
+            }else{
+                dt = 6*min_dt;
+            }
         }else{
             dt = min_dt;
         }
         
         double next_robot_yaw = cmd_vel.angular.z * dt;
         double next_robot_x = cmd_vel.linear.x * cos(next_robot_yaw) * dt;
-        double next_robot_y = cmd_vel.linear.y * sin(next_robot_yaw) * dt;
+        double next_robot_y = cmd_vel.linear.x * sin(next_robot_yaw) * dt;
 
-        mode.data = robot_status_str(robot_status::run);
+        visualization_msgs::Marker marker;	mode.data = robot_status_str(robot_status::run);
+        marker.header.frame_id = base_link_id;
+        marker.header.stamp = ros::Time::now();
+        marker.ns = "next_robot_position";
+        marker.id = 0;
+        marker.type = visualization_msgs::Marker::CYLINDER;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.lifetime = ros::Duration(0.01);
+        //visualize next robot position
+        marker.scale.x = robotRadius*2;
+        marker.scale.y = robotRadius*2;
+        marker.scale.z = 0.01;
+        marker.pose.position.x = next_robot_x;
+        marker.pose.position.y = next_robot_y;
+        marker.pose.position.z = 0;
+        marker.pose.orientation.x = 0;
+        marker.pose.orientation.y = 0;
+        marker.pose.orientation.z = 0;
+        marker.pose.orientation.w = 1;
+        marker.color.r = 1.0f;
+        marker.color.g = 0.0f;
+        marker.color.b = 0.0f;
+        marker.color.a = 1.0f;
+        marker_pub.publish(marker);
+
         for(int i=0; i<k_indices.size(); i++){
             double point_x = cloud->points[k_indices[i]].x;
             double point_y = cloud->points[k_indices[i]].y;
@@ -209,6 +240,7 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
                 if(stop_count > (int)(recovery_start_time*rate)){
                     ROS_INFO("robot recovery behaviour");
                     mode.data = robot_status_str(robot_status::recovery);
+                    //dt分recoveryをpublish
                     if(stop_count > (int)((recovery_start_time+min_dt)*rate)){
                         stop_count = 0;
                     }
@@ -244,6 +276,7 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
         linear_vel.data = cmd_vel_limit.linear.x;
         angular_vel.data = cmd_vel_limit.angular.z;
 
+        mode.data = robot_status_str(robot_status::run);
 
         cmd_pub.publish(cmd_vel_limit);
         linear_vel_pub.publish(linear_vel);
@@ -275,7 +308,7 @@ int safety_limit::getCost(double x, double y)
 
 bool safety_limit::check_around_obstacle(const geometry_msgs::Pose& nowPos)
 {
-    if(getCost(nowPos.position.x, nowPos.position.y)>10){
+    if(getCost(nowPos.position.x, nowPos.position.y)>1){
         return true;
     }else{
         return false;

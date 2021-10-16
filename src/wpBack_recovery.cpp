@@ -99,7 +99,9 @@ int main(int argc, char** argv)
 
             }else{
                 //select recovery way point
-                recoveryWpNum = now_wp.data - 1;
+                if(recoveryWpNum > 0){
+                    recoveryWpNum = now_wp.data - 1;
+                }
                 //target_deviationになるよう target way pointの更新
                 while(!(poseStampDistance(path.poses[recoveryWpNum], nowPosition.getPoseStamped()) >= recovery_leastDistance))
                 {
@@ -110,12 +112,10 @@ int main(int argc, char** argv)
                     }
                     recoveryWpNum--;
                 }
-            
+                
                 recovery_pose = path.poses[recoveryWpNum];
 
                 mode_out = mode;
-                cmd_vel.linear.x = 0;
-                cmd_vel.angular.z = 0;
 
                 preT = ros::Time::now();
             }

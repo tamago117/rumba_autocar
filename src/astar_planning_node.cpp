@@ -12,16 +12,31 @@
 #include "rumba_autocar/bezier_curve.h"
 #include "rumba_autocar/tf_position.h"
 
-geometry_msgs::PoseStamped goalPose;
+geometry_msgs::PoseStamped goalPoseStamp;
 void poseStamp_callback(const geometry_msgs::PoseStamped& poseStamp_message)
 {
-    goalPose = poseStamp_message;
+    goalPoseStamp = poseStamp_message;
 }
 
 nav_msgs::OccupancyGrid costmap;
 void cost_callback(const nav_msgs::OccupancyGrid& costmap_message)
 {
     costmap = costmap_message;
+}
+
+int getCost(double x, double y)
+{
+    //x = costmap.info.origin.position.x + x_grid*costmap.info.resolution
+    int x_grid = abs((x - costmap.info.origin.position.x)/costmap.info.resolution);
+    int y_grid = abs((y - costmap.info.origin.position.y)/costmap.info.resolution);
+
+    int data_pos = costmap.info.width * y_grid + x_grid;
+
+    if(data_pos > 0 && data_pos < costmap.data.size()){
+        return costmap.data[data_pos];
+    }else{
+        return std::numeric_limits<int>::min();
+    }
 }
 
 geometry_msgs::Quaternion yaw_to_geometry_quat(double yaw){
@@ -58,6 +73,8 @@ int main(int argc, char** argv)
     double heuristic_gain, resolution;
     pnh.param<double>("heuristic_gain", heuristic_gain, 1.0);
     pnh.param<double>("resolution", resolution, 0.1);
+    double replanningRadius;
+    pnh.param<double>("replanning_radius", replanningRadius, 1.0);
     int approNode;
     double approResolution;
     pnh.param<int>("approximationNode", approNode, 15);
@@ -78,6 +95,8 @@ int main(int argc, char** argv)
     tf_position nowPosition(map_id, base_link_id, rate);
 
     std_msgs::Bool isSuccessPlanning;
+    geometry_msgs::PoseStamped startPose;	
+    geometry_msgs::PoseStamped goalPose;
 
     ros::Rate loop_rate(rate);
     while(ros::ok())
@@ -85,10 +104,70 @@ int main(int argc, char** argv)
         if(costmap.data.size()>0){
 
             std::vector<double> path_x, path_y;
-            if(star.planning(path_x, path_y, nowPosition.getPose(), goalPose.pose, costmap)){
+            //first pose stay in around obstacles
+            if(getCost(nowPosition.getPose().position.x, nowPosition.getPose().position.y)<costmapThreshold){
+                startPose = nowPosition.getPoseStamped();
                 isSuccessPlanning.data = true;
             }else{
+                //resampling start pose (8 positions)
+                for(int i=0; i<8; ++i){
+                    startPose.pose.position.x = nowPosition.getPose().position.x + replanningRadius*cos(2*M_PI*i/8);
+                    startPose.pose.position.y = nowPosition.getPose().position.y + replanningRadius*sin(2*M_PI*i/8);
+                    if(getCost(startPose.pose.position.x, startPose.pose.position.y)<costmapThreshold){
+                        isSuccessPlanning.data = true;
+                        break;
+                    }
+                    if(i==7){
+                        isSuccessPlanning.data = false;
+                    }
+                }
+            }
+
+            //fail start pose
+            if(!isSuccessPlanning.data){
+                //path message contains only a goalPoseStamp
+                nav_msgs::Path plan_path;
+                plan_path.header.frame_id = map_id;
+                plan_path.header.stamp = ros::Time::now();
+                plan_path.poses.push_back(goalPoseStamp);
+
+                path_pub.publish(plan_path);
+                bool_pub.publish(isSuccessPlanning);
+                continue;
+            }
+
+            
+            if(star.planning(path_x, path_y, startPose.pose, goalPose.pose, costmap)){
+                isSuccessPlanning.data = true;
+                goalPose = goalPoseStamp;
+            }else{
                 isSuccessPlanning.data = false;
+                bool_pub.publish(isSuccessPlanning);
+                //resampling goal pose (8 positions)
+                for(int i=0; i<8; ++i){
+                    goalPose.pose.position.x = goalPoseStamp.pose.position.x + replanningRadius*cos(2*M_PI*i/8);
+                    goalPose.pose.position.y = goalPoseStamp.pose.position.y + replanningRadius*sin(2*M_PI*i/8);
+                    if(star.planning(path_x, path_y, startPose.pose, goalPose.pose, costmap)){
+                        isSuccessPlanning.data = true;
+                        break;
+                    }
+                    if(i==7){
+                        isSuccessPlanning.data = false;
+                    }
+                }
+            }
+
+            //fail end pose
+            if(!isSuccessPlanning.data){
+                //path message contains only a goalPoseStamp
+                nav_msgs::Path plan_path;
+                plan_path.header.frame_id = map_id;
+                plan_path.header.stamp = ros::Time::now();
+                plan_path.poses.push_back(goalPoseStamp);
+
+                path_pub.publish(plan_path);
+                bool_pub.publish(isSuccessPlanning);
+                continue;
             }
 
             //approximate bezier curve
@@ -161,16 +240,20 @@ int main(int argc, char** argv)
             for(int i=0; i<r_x.size(); i++){
                 geometry_msgs::PoseStamped pose;
                 pose.header.frame_id = map_id;
+                pose.header.stamp = ros::Time::now();
                 pose.pose.position.x = r_x[i];
                 pose.pose.position.y = r_y[i];
+                pose.pose.position.z = nowPosition.getPose().position.z;
                 pose.pose.orientation = yaw_to_geometry_quat(angles[i]);
 
                 plan_path.poses.push_back(pose);
             }
             plan_path.header.frame_id = map_id;
             plan_path.header.stamp = ros::Time::now();
-
-            path_pub.publish(plan_path);
+            
+            if(isSuccessPlanning.data){
+                path_pub.publish(plan_path);
+            }
             bool_pub.publish(isSuccessPlanning);
         }
 
