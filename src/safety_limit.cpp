@@ -259,31 +259,30 @@ void safety_limit::callback_knn(const sensor_msgs::PointCloud2ConstPtr& pc2){
         //衝突判定に引っかからなければcountを初期化
         stop_count = 0;
 
-        //potential check
-        static tf_position nowPosition(map_id, base_link_id, rate);
-        if(costmap.data.size()>0){
-            if(dangerous_potential){
-                if(check_around_obstacle(nowPosition.getPose())){
-                    cmd_vel_limit.linear.x *= lowMode_speedRatio;
-                    cmd_vel_limit.angular.z *= lowMode_speedRatio;
-                }
+    }
+    //potential check
+    static tf_position nowPosition(map_id, base_link_id, rate);
+    if(costmap.data.size()>0){
+        if(dangerous_potential){
+            if(check_around_obstacle(nowPosition.getPose())){
+                cmd_vel_limit.linear.x *= lowMode_speedRatio;
+                cmd_vel_limit.angular.z *= lowMode_speedRatio;
             }
         }
-
-        cmd_vel_limit.linear.x = constrain(cmd_vel_limit.linear.x, -max_linear_vel, max_linear_vel);
-        cmd_vel_limit.angular.z = constrain(cmd_vel_limit.angular.z, -max_angular_vel, max_angular_vel);
-
-        linear_vel.data = cmd_vel_limit.linear.x;
-        angular_vel.data = cmd_vel_limit.angular.z;
-
-        mode.data = robot_status_str(robot_status::run);
-
-        cmd_pub.publish(cmd_vel_limit);
-        linear_vel_pub.publish(linear_vel);
-        angular_vel_pub.publish(angular_vel);
-        mode_pub.publish(mode);
-
     }
+
+    cmd_vel_limit.linear.x = constrain(cmd_vel_limit.linear.x, -max_linear_vel, max_linear_vel);
+    cmd_vel_limit.angular.z = constrain(cmd_vel_limit.angular.z, -max_angular_vel, max_angular_vel);
+
+    linear_vel.data = cmd_vel_limit.linear.x;
+    angular_vel.data = cmd_vel_limit.angular.z;
+
+    mode.data = robot_status_str(robot_status::run);
+
+    cmd_pub.publish(cmd_vel_limit);
+    linear_vel_pub.publish(linear_vel);
+    angular_vel_pub.publish(angular_vel);
+    mode_pub.publish(mode);
 }
 
 void safety_limit::cost_callback(const nav_msgs::OccupancyGrid& costmap_message)

@@ -53,6 +53,11 @@ bool a_star::planning(std::vector<double>& fx, std::vector<double>& fy, const ge
     double gx = goalPos.position.x;
     double gy = goalPos.position.y;
 
+    if(abs(gx - sx)>costmap.info.width*costmap.info.resolution/2 || abs(gy - sy)>costmap.info.width*costmap.info.resolution/2){
+        std::cout<<"goal pose cross over costmap range!"<<std::endl;
+        return false;
+    }
+
 
     Node* nstart = new Node{(int)std::round(sx/resolution), (int)std::round(sy/resolution), 0.0};
     Node* ngoal = new Node{(int)std::round(gx/resolution), (int)std::round(gy/resolution), 0.0};
@@ -68,7 +73,10 @@ bool a_star::planning(std::vector<double>& fx, std::vector<double>& fy, const ge
     std::vector<std::vector<int>> visit_map(xwidth, std::vector<int>(ywidth, 0));
     std::vector<std::vector<double>> path_cost(xwidth, std::vector<double>(ywidth, std::numeric_limits<double>::max()));
 
-    //path_cost[nstart->x][nstart->y] = 0;
+    //position jump measure
+    if(!((nstart->x-min_ox>=0 && nstart->x-min_ox<xwidth) && (nstart->y-min_oy>=0 && nstart->y-min_oy<ywidth))){
+        return false;
+    }
     path_cost[nstart->x-min_ox][nstart->y-min_oy] = 0;
 
     auto cmp = [](const Node* left, const Node* right){return left->sum_cost > right->sum_cost;};
@@ -81,6 +89,8 @@ bool a_star::planning(std::vector<double>& fx, std::vector<double>& fy, const ge
     {
         if(pq.empty()){
             std::cout<<"path don't find!"<<std::endl;
+            //delete ngoal;
+            //delete nstart;
             return false;
         }
         Node* node = pq.top();
@@ -147,14 +157,17 @@ bool a_star::planning(std::vector<double>& fx, std::vector<double>& fy, const ge
 
 std::vector<a_star::Node> a_star::get_motion_model()
 {
-    return {Node{1, 0, 1},
-            Node{0, 1, 1},
+    //avoid result vibration
+    static double bias = 0.1;
+
+    return {Node{1, 0, 1+bias},
+            Node{0, 1, 1+bias},
             Node{-1, 0, 1},
             Node{0, -1, 1},
             Node{-1, -1, sqrt(2)},
             Node{-1, 1, sqrt(2)},
-            Node{1, -1, sqrt(2)},
-            Node{1, 1, sqrt(2)}};
+            Node{1, -1, sqrt(2)+bias},
+            Node{1, 1, sqrt(2)+bias}};
 }
 
 bool a_star::verify_node(Node* node, int min_ox, int max_ox, int min_oy, int max_oy)
@@ -209,4 +222,5 @@ void a_star::calc_final_path(Node* goal, std::vector<double>& fx, std::vector<do
     fy = ry;
 }
 
-}
+
+}//namespace ctr

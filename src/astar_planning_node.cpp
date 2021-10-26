@@ -137,7 +137,7 @@ int main(int argc, char** argv)
             }
 
             
-            if(star.planning(path_x, path_y, startPose.pose, goalPose.pose, costmap)){
+            if(star.planning(path_x, path_y, startPose.pose, goalPoseStamp.pose, costmap)){
                 isSuccessPlanning.data = true;
                 goalPose = goalPoseStamp;
             }else{
