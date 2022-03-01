@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="way_file" default="turtlebot_world_way.csv"/>
+    <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
+    <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+    <arg name="amcl_config" default="$(find eg_navigation)/config/amcl.yaml" />
+
+    <arg name="sim" default="true"/>
+    <arg name="world_name" default="turtlebot3_world.world"/>
+    <!--<arg name="world_name" default="turtlebot3_house.world"/>-->
+    <arg name="model" default="$(find rumba_autocar)/xacro/rumba_autocar.xacro" />
+
+    <!--gazebo-->
+    <group if="$(arg sim)">
+        <include file="$(find rumba_autocar)/launch/include/sim.launch" >
+            <arg name="world_name" value="$(arg world_name)"/>
+        </include>
+    </group>
+    <!--start up roomba-->
+    <group unless="$(arg sim)">
+        <include file="$(find rumba_autocar)/launch/include/sensor.launch" />
+    </group>
+    <include file="$(find rumba_autocar)/launch/include/sensor_processor.launch" />
+
+    <!--model show-->
+    <include file="$(find rumba_autocar)/launch/include/model_show.launch" >
+        <arg name="include" value="true"/>
+        <arg name="model" default="$(arg model)" />
+    </include>
+
+    <include file="$(find eg_navigation)/launch/include/slam_2d.launch">
+        <arg name="nav_mode" default="localization"/>
+        <arg name="mapFile" value="$(arg mapFile)"/>
+        <arg name="amcl_config" default="$(arg amcl_config)" />
+    </include>
+
+    <node name="wpLoad" pkg="eg_wptool" type="wpLoad">
+        <param name="filePath" value="$(find rumba_autocar)/csv/$(arg way_file)"/>
+        <param name="map_frame_id" value="map"/>
+    </node>
+    <node name="wpVisualizer" pkg="eg_wptool" type="wpVisualizer">
+        <remap from="path" to="wayPoint/path"/>
+        <param name="markerSize" value="1.0"/>
+    </node>
+   <!--<node name="wpIdentify" pkg="eg_wptool" type="wpIdentify" output="screen">
+        <remap from="path" to="wayPoint/path"/>
+    </node>-->
+    <node name="wpSelect" pkg="eg_wptool" type="wpSelect">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="maxVelocity" value="0.7"/>
+        <param name="loop_rate" value="20"/>
+        <param name="target_deviation" value="0.4"/>
+        <param name="final_target_deviation" value="0.1"/>
+        <remap from="path" to="wayPoint/path"/>
+        <remap from="successPlan" to="astar_planning_node/successPlan"/>
+    </node>
+
+    <!--costmap-->
+    <node pkg="eg_mixed" type="costmap_node" name="costmap_node">
+        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params_2d.yaml" />
+    </node>
+    <node name="path_costmap" pkg="eg_mixed" type="path_costmap" >
+        <rosparam command="load" file="$(find rumba_autocar)/config/local_costmap_params_2d.yaml" />
+    </node>
+    <node name="costmap_merger" pkg="eg_mixed" type="costmap_merger" >
+        <remap from="costmap_node/base_costmap" to="costmap_node/path_costmap" />
+        <remap from="costmap_node/sub_costmap" to="costmap_node/my_costmap/costmap" />
+        <remap from="costmap_node/merged_costmap" to="costmap_node/merged_costmap" />
+    </node>
+
+    <node name="astar_planning_node" pkg="eg_planner" type="astar_planning_node" output="screen">
+        <rosparam command="load" file="$(find rumba_autocar)/config/astar_planning.yaml" />
+        <remap from="astar_planning_node/goal" to="targetWpPose"/>
+        <remap from="astar_planning_node/costmap" to="costmap_node/merged_costmap"/>
+    </node>
+
+    <node name="lane_planner" pkg="eg_planner" type="lane_planner">
+        <rosparam file="$(find rumba_autocar)/config/lane_planner.yaml" command="load" />
+        <remap from="lane_planner/costmap" to="costmap_node/my_costmap/costmap"/>
+        <remap from="path" to="astar_planning_node/path"/>
+        <remap from="robot_now_vel" to="cmd_vel"/>
+    </node>
+
+    <node name="pure_posePursuit" pkg="eg_track" type="pure_posePursuit">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="30"/>
+        <param name="maxVelocity" value="1.0"/>
+        <param name="minVelocity" value="0.1"/>
+        <param name="max_angular_vel" value="1.0"/>
+        <param name="maxCurvature" value="3"/>
+        <remap from="pure_posePursuit/pose_in" to="lane_planner/pose_out"/>
+    </node>
+
+
+    <node name="wpBack_recovery" pkg="eg_safety" type="wpBack_recovery" output="screen">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="20"/>
+        <param name="linear_vel" value="-0.3"/>
+        <param name="max_angular_vel" value="1.0"/>
+        <param name="duration" value="6.0"/>
+        <param name="recovery_leastDistance" value="2.0"/>
+        <param name="fin_recovery_deviation" value="0.2"/>
+        <remap from="path" to="wayPoint/path"/>
+    </node>
+
+    <!--<node pkg="eg_safety" name="simple_recovery" type="simple_recovery">
+        <param name="linear_vel" value="-0.3"/>
+        <param name="angular_vel" value="0"/>
+        <param name="duration" value="1.5"/>
+    </node>-->
+
+    <node name="twist_maneger" pkg="eg_navigation" type="twist_maneger">
+        <param name="base_link_frame_id" value="base_link"/>
+        <param name="map_frame_id" value="map"/>
+        <param name="loop_rate" value="30"/>
+        <remap from="twist_maneger/targetWpPose_in" to="targetWpPose"/>
+        <remap from="twist_maneger/targetPose_in" to="lane_planner/pose_out"/>
+        <remap from="cmd_vel" to="pure_posePursuit/cmd_vel"/>
+        <remap from="waypoint/now" to="targetWp"/>
+    </node>
+    <!--safety function-->
+    <node pkg="eg_mixed" name="laser2pc" type="laser2pc"/>
+    <node pkg="eg_safety" name="safety_limit" type="safety_limit" output="screen">
+        <rosparam file="$(find rumba_autocar)/config/safety_limit.yaml" command="load" />
+        <remap from="safety_limit/cmd_vel_in" to="twist_maneger/cmd_vel"/>
+        <remap from="safety_limit/cmd_vel_out" to="cmd_vel"/>
+        <remap from="cloud" to="laser2pc/pc2"/>
+        <remap from="safety_limit/costmap" to="costmap_node/my_costmap/costmap"/>
+     </node>
+
+    <!--rviz-->
+    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/navigation_2d.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" respawn="true" />
+
+    <node name="wpInitialPose" pkg="eg_wptool" type="wpInitialPose"/>
+
+</launch>

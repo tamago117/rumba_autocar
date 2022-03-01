@@ -1,0 +1,32 @@
+<launch>
+    <arg name="rviz" default="true"/>
+    <arg name="sim" default="true"/>
+    <arg name="world_name" default="turtlebot3_world.world"/>
+    <arg name="model" default="$(find rumba_autocar)/xacro/rumba_autocar.xacro" />
+
+    <group if="$(arg sim)">
+        <include file="$(find rumba_autocar)/launch/include/sim.launch" >
+            <arg name="world_name" value="$(arg world_name)"/>
+        </include>
+    </group>
+    <group unless="$(arg sim)">
+        <include file="$(find rumba_autocar)/launch/include/sensor.launch" />
+    </group>
+    <include file="$(find rumba_autocar)/launch/include/sensor_processor.launch" />
+
+    <!--joystick -> cmd_vel-->
+    <node name="joy_node" pkg="joy" type="joy_node"/>
+    <node name="joystickPS4" pkg="eg_mixed" type="joystickPS4">
+        <param name="control_rate" value="0.6"/>
+    </node>
+
+    <!--rviz-->
+    <include file="$(find rumba_autocar)/launch/include/model_show.launch" >
+        <arg name="include" value="true"/>
+        <arg name="model" default="$(arg model)" />
+    </include>
+    <group if="$(arg rviz)">
+        <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/operation_check.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    </group>
+</launch>

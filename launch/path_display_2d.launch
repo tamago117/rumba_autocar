@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="fileName" default="turtlebot_world_wayA.csv"/>
-    <!--<arg name="fileName" default="house_way.csv"/>-->
-    <arg name="mapFile" default = "$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+    <arg name="fileName" default="turtlebot_world_way.csv"/>
     <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
+    <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
 
-    <node name="wpLoad" pkg="rumba_autocar" type="wpLoad" output="screen">
+    <node name="wpLoad" pkg="eg_wptool" type="wpLoad" output="screen">
         <param name="filePath" value="$(find rumba_autocar)/csv/$(arg fileName)"/>
         <param name="map_frame_id" value="map"/>
         <remap from="wayPoint/path" to="path"/>
@@ -14,9 +13,11 @@
     <node pkg="map_server" type="map_server" name="map_server" args="$(arg mapFile)">
         <param name="frame_id" value="map"/>
     </node>
-    <node name="wpVisualizer" pkg="rumba_autocar" type="wpVisualizer"/>
+    <node name="wpVisualizer" pkg="eg_wptool" type="wpVisualizer">
+        <param name="markerSize" value="1.0"/>
+    </node>
 
-    <arg name="rvizconfig" default="$(find rumba_autocar)/rviz/path_display.rviz" />
+    <arg name="rvizconfig" default="$(find eg_navigation)/rviz/path_display.rviz" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 </launch>

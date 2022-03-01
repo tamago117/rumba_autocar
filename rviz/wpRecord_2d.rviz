@@ -6,10 +6,12 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /LaserScan1
+        - /TFTrajectory1
         - /TF1/Frames1
         - /TF1/Tree1
       Splitter Ratio: 0.5
-    Tree Height: 416
+    Tree Height: 422
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -74,15 +76,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_bottom_screw_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         front_wheel_link:
           Alpha: 1
           Show Axes: false
@@ -105,6 +98,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        lidar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         right_cliff_sensor_link:
           Alpha: 1
           Show Axes: false
@@ -131,29 +129,27 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
+        Max Value: 0.1310725212097168
+        Min Value: -0.491057425737381
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/LaserScan
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: AxisColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 7139
       Min Color: 0; 0; 0
-      Min Intensity: 100
       Name: LaserScan
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.05000000074505806
       Style: Flat Squares
-      Topic: /scan_filtered
+      Topic: /scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -190,46 +186,40 @@ Visualization Manager:
       color: 25; 255; 240
       duration: 1000
       frame: base_link
-      line_width: 0.009999999776482582
+      line_width: 0.05000000074505806
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
         base_footprint:
-          Value: false
+          Value: true
         base_link:
           Value: true
-        camera_bottom_screw_frame:
-          Value: false
-        camera_link:
-          Value: false
         front_wheel_link:
-          Value: false
+          Value: true
         gyro_link:
-          Value: false
+          Value: true
         left_cliff_sensor_link:
-          Value: false
+          Value: true
         left_wheel_link:
           Value: false
         leftfront_cliff_sensor_link:
-          Value: false
+          Value: true
         lidar_link:
-          Value: false
+          Value: true
         map:
           Value: true
         odom:
           Value: true
         right_cliff_sensor_link:
-          Value: false
+          Value: true
         right_wheel_link:
           Value: false
         rightfront_cliff_sensor_link:
-          Value: false
-        robotBase_link:
           Value: true
         wall_sensor_link:
-          Value: false
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -240,9 +230,6 @@ Visualization Manager:
           odom:
             base_footprint:
               base_link:
-                camera_bottom_screw_frame:
-                  camera_link:
-                    {}
                 front_wheel_link:
                   {}
                 gyro_link:
@@ -253,62 +240,34 @@ Visualization Manager:
                   {}
                 leftfront_cliff_sensor_link:
                   {}
+                lidar_link:
+                  {}
                 right_cliff_sensor_link:
                   {}
                 right_wheel_link:
                   {}
                 rightfront_cliff_sensor_link:
                   {}
-                robotBase_link:
-                  lidar_link:
-                    {}
                 wall_sensor_link:
                   {}
       Update Interval: 0
       Value: true
     - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
       Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /move_base/TrajectoryPlannerROS/local_plan
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /particlecloud
       Unreliable: false
       Value: true
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: false
-      Name: localCostMap
-      Topic: /move_base/global_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: false
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: costmap
-      Draw Behind: false
-      Enabled: false
-      Name: globalCostMap
-      Topic: /move_base/global_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -337,25 +296,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.191286087036133
+      Distance: 6.656416893005371
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 1.8245303630828857
+        Y: -0.43473392724990845
+        Z: -0.3007260262966156
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8997958898544312
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.6453840732574463
+      Yaw: 3.0953831672668457
     Saved: ~
 Window Geometry:
   Displays:
@@ -363,7 +322,7 @@ Window Geometry:
   Height: 713
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001560000022bfc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000022b000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000022bfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d0000022b000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005130000003efc0100000002fb0000000800540069006d0065010000000000000513000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000002a20000022b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001560000022ffc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b0000022f000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000022ffc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003b0000022f000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005130000003efc0100000002fb0000000800540069006d00650100000000000005130000024400fffffffb0000000800540069006d00650100000000000004500000000000000000000002a20000022f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -373,5 +332,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1299
-  X: 67
+  X: 72
   Y: 27
