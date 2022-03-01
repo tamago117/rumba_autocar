@@ -15,7 +15,10 @@ catkin_make
 
 ## simple demo
 ```
-roslaunch rumba_autocar wpTrack.launch
+roslaunch rumba_autocar navigation_2d.launch
+
+#real roomba
+roslaunch rumba_autocar navigation_2d.launch sim:=true
 ```
 https://user-images.githubusercontent.com/38370926/134785348-0740eb23-357f-4d7b-a2ae-2db73768416a.mp4
 
