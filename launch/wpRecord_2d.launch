@@ -5,7 +5,8 @@
     <arg name="loop_rate" default="50"/>
     <arg name="fileName" default="way1"/>
     <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
-    <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+    <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>-->
+    <arg name="mapFile" value="$(find rumba_autocar)/resources/myRoom/map.yaml"/>
     <arg name="amcl_config" default="$(find eg_navigation)/config/amcl.yaml" />
 
     <arg name="sim" default="true"/>

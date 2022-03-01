@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="way_file" default="turtlebot_world_way.csv"/>
+    <!--<arg name="way_file" default="turtlebot_world_way.csv"/>-->
+    <arg name="way_file" default="my_room.csv"/>
     <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtle_house/map.yaml"/>-->
-    <arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>
+    <!--<arg name="mapFile" value="$(find rumba_autocar)/resources/turtlebot3_world/map.yaml"/>-->
+    <arg name="mapFile" value="$(find rumba_autocar)/resources/myRoom/map.yaml"/>
     <arg name="amcl_config" default="$(find eg_navigation)/config/amcl.yaml" />
 
     <arg name="sim" default="true"/>
@@ -49,9 +51,9 @@
     <node name="wpSelect" pkg="eg_wptool" type="wpSelect">
         <param name="base_link_frame_id" value="base_link"/>
         <param name="map_frame_id" value="map"/>
-        <param name="maxVelocity" value="0.7"/>
+        <param name="maxVelocity" value="0.5"/>
         <param name="loop_rate" value="20"/>
-        <param name="target_deviation" value="0.4"/>
+        <param name="target_deviation" value="0.2"/>
         <param name="final_target_deviation" value="0.1"/>
         <remap from="path" to="wayPoint/path"/>
         <remap from="successPlan" to="astar_planning_node/successPlan"/>
@@ -87,7 +89,7 @@
         <param name="base_link_frame_id" value="base_link"/>
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="30"/>
-        <param name="maxVelocity" value="1.0"/>
+        <param name="maxVelocity" value="0.5"/>
         <param name="minVelocity" value="0.1"/>
         <param name="max_angular_vel" value="1.0"/>
         <param name="maxCurvature" value="3"/>
@@ -100,9 +102,9 @@
         <param name="map_frame_id" value="map"/>
         <param name="loop_rate" value="20"/>
         <param name="linear_vel" value="-0.3"/>
-        <param name="max_angular_vel" value="1.0"/>
-        <param name="duration" value="6.0"/>
-        <param name="recovery_leastDistance" value="2.0"/>
+        <param name="max_angular_vel" value="0.5"/>
+        <param name="duration" value="2.0"/>
+        <param name="recovery_leastDistance" value="0.5"/>
         <param name="fin_recovery_deviation" value="0.2"/>
         <remap from="path" to="wayPoint/path"/>
     </node>
